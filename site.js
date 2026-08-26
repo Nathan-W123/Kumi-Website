@@ -66,6 +66,7 @@ function wire() {
   const signal = halt.signal;
 
   injectStyles();
+  wireCoordinationShowcase({ animate, inView, stagger, scroll }, fine, signal);
 
   // -- Hero: the headline rises glyph by glyph out of the clipped word
   //    boxes, each character straightening from a slight lean as it lands.
@@ -869,7 +870,11 @@ function liveMarquee(inView, signal) {
  * arbitration, then promotion. The same stage also gains a subtle pointer
  * perspective on fine pointers and a restrained scroll-linked depth shift.
  */
-function wireCoordinationShowcase({ animate, inView, stagger, scroll }, fine) {
+function wireCoordinationShowcase(
+  { animate, inView, stagger, scroll },
+  fine,
+  signal,
+) {
   const stage = document.querySelector("[data-coordination-stage]");
   if (stage === null) {
     return;
@@ -905,15 +910,27 @@ function wireCoordinationShowcase({ animate, inView, stagger, scroll }, fine) {
   if (!fine) {
     return;
   }
-  stage.addEventListener("pointermove", (event) => {
-    const box = stage.getBoundingClientRect();
-    const x = (event.clientX - box.left) / box.width - 0.5;
-    const y = (event.clientY - box.top) / box.height - 0.5;
-    stage.style.setProperty("--stage-rx", `${y * -2.4}deg`);
-    stage.style.setProperty("--stage-ry", `${x * 3.2}deg`);
-  });
-  stage.addEventListener("pointerleave", () => {
-    stage.style.setProperty("--stage-rx", "0deg");
-    stage.style.setProperty("--stage-ry", "0deg");
+  stage.addEventListener(
+    "pointermove",
+    (event) => {
+      const box = stage.getBoundingClientRect();
+      const x = (event.clientX - box.left) / box.width - 0.5;
+      const y = (event.clientY - box.top) / box.height - 0.5;
+      stage.style.setProperty("--stage-rx", `${y * -2.4}deg`);
+      stage.style.setProperty("--stage-ry", `${x * 3.2}deg`);
+    },
+    { signal },
+  );
+  stage.addEventListener(
+    "pointerleave",
+    () => {
+      stage.style.setProperty("--stage-rx", "0deg");
+      stage.style.setProperty("--stage-ry", "0deg");
+    },
+    { signal },
+  );
+  teardowns.push(() => {
+    stage.style.removeProperty("--stage-rx");
+    stage.style.removeProperty("--stage-ry");
   });
 }
