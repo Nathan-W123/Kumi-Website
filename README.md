@@ -66,6 +66,24 @@ It is forgiving about two things a plain server taught people to type:
 `/pricing/` and `/pricing.html` both redirect to `/pricing`, so there is one
 canonical address per page and it is production's.
 
+### Served under a path prefix
+
+Every asset and page reference in these files is **relative**, and it has to
+stay that way. The site is served at more than one depth: production gives it
+the origin root, and Kumi's own preview proxy gives it a deep path under
+`/api/v1/projects/<id>/repositories/<id>/preview/app/` so the pages can be
+looked at from a phone without a port being opened. A root-absolute
+`href="/site.css"` resolves to the *deployment's* stylesheet in that second
+case, and every link in the nav walks out of the preview and into production
+— the page looks right and is not the page being previewed.
+
+`/app` is the deliberate exception, and the only one. The dashboard really is
+at the origin's root, so from inside a preview "open the product" should reach
+the deployment rather than something inside the preview. `site-boot.js`
+forwards to it only from `/` for the same reason: served anywhere else, its
+installed-shell tell fires inside the preview and replaces the site with the
+real app.
+
 ## Deploying
 
 Any static host works — the files are flat and the routing this server does
