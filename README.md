@@ -24,21 +24,53 @@ This repository mirrors the site portion. If you edit here, carry the change
 back to `apps/web/public/site/` (or vice versa) — the gateway serves that
 copy, not this one.
 
-## Previewing
+One page deliberately has no counterpart there. `/download` in production is
+served by the dashboard, from `apps/web/public/download.html`, and that page
+is styled with the dashboard's stylesheet rather than this one — 315 KB of
+CSS carried into a marketing mirror is not a trade worth making. The version
+here is the same links in the site's own styling. The links are the thing
+that must not drift; see **Downloads** below.
 
-Any static server works for looking at the pages:
+## Running it
 
 ```sh
-npx serve .          # or: python3 -m http.server
+npm start          # http://127.0.0.1:4173
 ```
 
-Two things behave differently outside the real gateway:
+`server.mjs` is the whole thing: no dependencies, and it holds the same
+address→file table the gateway builds from `SITE_FILES` in
+`apps/web/src/assets.ts`. Read the two side by side when either changes.
 
-- The nav links are extensionless (`/pricing`, `/download`) because that is
-  how the gateway serves them. A plain static server wants `pricing.html`;
-  hosts with clean-URL rewriting (Netlify, Vercel) match production.
-- Everything under `/app` — sign in, start free trial — belongs to the
-  deployment, not this repo. Those buttons dead-end in a standalone preview.
+`PORT` and `HOST` are honoured, which is what makes this work under Kumi's own
+preview button — press play on this repository and it runs `npm start` on a
+port it picked and gives you the site at the addresses it really has.
+
+`/app` is not in this repository, so the server redirects it to the
+deployment. Set `KUMI_APP_ORIGIN` to point sign-in and the trial button
+somewhere else:
+
+```sh
+KUMI_APP_ORIGIN=http://127.0.0.1:8080 npm start
+```
+
+### Why not just a static server
+
+`npx serve .` and `python3 -m http.server` will serve the homepage, correctly
+styled, and then 404 every link in the nav. The pages ask for `/pricing` and
+`/download`, because that is how the gateway serves them; on disk those are
+`pricing.html` and `download.html`. Hosts with clean-URL rewriting (Netlify,
+Vercel, GitHub Pages) match production without help. Plain file servers do
+not, which is what `server.mjs` is for.
+
+It is forgiving about two things a plain server taught people to type:
+`/pricing/` and `/pricing.html` both redirect to `/pricing`, so there is one
+canonical address per page and it is production's.
+
+## Deploying
+
+Any static host works — the files are flat and the routing this server does
+is the same clean-URL rewriting those hosts do themselves. `server.mjs` is
+for previewing, and is what runs when the site is served by Node.
 
 ## Motion
 
@@ -47,3 +79,13 @@ deep links and installed shells to `/app`, and arms the `anim` class only
 when the visitor accepts motion. `site.js` wires every animation through the
 vendored Motion bundle and strips `anim` under `prefers-reduced-motion` — the
 pages read whole with scripts disabled entirely.
+
+## Downloads
+
+`download.html` links at
+`releases/latest/download/<file>` on
+[Nathan-W123/Kumi](https://github.com/Nathan-W123/Kumi/releases), which
+GitHub redirects to whatever the newest release calls that file — so the page
+needs no edit when a version ships. The installer names come from
+`apps/desktop/electron-builder.yml` in the product repository, and the
+release workflow there checks them against what it actually built.

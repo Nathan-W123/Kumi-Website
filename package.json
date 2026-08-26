@@ -1,0 +1,13 @@
+{
+  "name": "kumi-website",
+  "private": true,
+  "version": "0.0.0",
+  "description": "The Kumi marketing site, and a server that gives it production's addresses.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}
