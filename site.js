@@ -863,3 +863,57 @@ function liveMarquee(inView, signal) {
     track.style.transform = "";
   });
 }
+
+/**
+ * Stages the coordination story as a short sequence: request, parallel work,
+ * arbitration, then promotion. The same stage also gains a subtle pointer
+ * perspective on fine pointers and a restrained scroll-linked depth shift.
+ */
+function wireCoordinationShowcase({ animate, inView, stagger, scroll }, fine) {
+  const stage = document.querySelector("[data-coordination-stage]");
+  if (stage === null) {
+    return;
+  }
+
+  const items = stage.querySelectorAll("[data-coord-item]");
+  const floats = stage.querySelectorAll("[data-coord-float]");
+  inView(
+    stage,
+    () => {
+      animate(
+        items,
+        { opacity: [0, 1], transform: ["translateY(18px)", "translateY(0px)"] },
+        { duration: 0.55, delay: stagger(0.13), ease: EASE },
+      );
+      animate(
+        floats,
+        { opacity: [0, 1], scale: [0.92, 1] },
+        { duration: 0.6, delay: stagger(0.15, { startDelay: 0.45 }), ease: EASE },
+      );
+    },
+    { margin: "0px 0px -18% 0px" },
+  );
+
+  const glow = stage.querySelector(".coord-glow");
+  if (glow !== null) {
+    scroll(
+      animate(glow, { y: [32, -24] }, { ease: "linear" }),
+      { target: stage, offset: ["start end", "end start"] },
+    );
+  }
+
+  if (!fine) {
+    return;
+  }
+  stage.addEventListener("pointermove", (event) => {
+    const box = stage.getBoundingClientRect();
+    const x = (event.clientX - box.left) / box.width - 0.5;
+    const y = (event.clientY - box.top) / box.height - 0.5;
+    stage.style.setProperty("--stage-rx", `${y * -2.4}deg`);
+    stage.style.setProperty("--stage-ry", `${x * 3.2}deg`);
+  });
+  stage.addEventListener("pointerleave", () => {
+    stage.style.setProperty("--stage-rx", "0deg");
+    stage.style.setProperty("--stage-ry", "0deg");
+  });
+}

@@ -105,6 +105,75 @@
     </div>
 
     <main>
+      <section class="coordination section" aria-labelledby="coordination-title">
+        <div class="wrap">
+          <div class="coordination-copy reveal">
+            <p class="eyebrow">Coordination in motion</p>
+            <h2 id="coordination-title">One request. Every agent, in sync.</h2>
+            <p>Kumi turns a conversation into an ordered plan. Agents can move
+              at the same time, while conflicts are surfaced and sequenced
+              before anyone overwrites someone else's work.</p>
+          </div>
+
+          <div class="coordination-stage reveal" data-coordination-stage>
+            <div class="coord-glow" aria-hidden="true"></div>
+            <div class="coord-window" aria-label="An animated Kumi workspace coordinating two coding agents">
+              <div class="coord-topbar">
+                <span class="coord-brand"><img src="kumi-logo.png" alt="" width="22" height="22">Kumi</span>
+                <span class="coord-channel"><i></i> expense-tracker</span>
+                <span class="coord-live"><i></i> 2 agents working</span>
+              </div>
+              <div class="coord-layout">
+                <aside class="coord-sidebar" aria-hidden="true">
+                  <span class="sidebar-label">Repositories</span>
+                  <span class="repo active"><b>ET</b><em>expense-tracker</em></span>
+                  <span class="repo"><b>WB</b><em>webhooks</em></span>
+                  <span class="repo"><b>DS</b><em>design-system</em></span>
+                </aside>
+                <div class="coord-thread">
+                  <div class="coord-day"><span>Today</span></div>
+                  <article class="coord-message human" data-coord-item>
+                    <span class="coord-avatar human-avatar">N</span>
+                    <div><p class="coord-meta"><strong>Nathan</strong><time>5:24 PM</time></p>
+                      <p>Build an expense tracker, then add search and a monthly spending limit.</p></div>
+                  </article>
+                  <div class="coord-agent-grid">
+                    <article class="agent-task rhea" data-coord-item>
+                      <div class="agent-heading"><span class="agent-mark">R</span><div><strong>Rhea</strong><small>Implementing search</small></div><span class="task-status">Working</span></div>
+                      <div class="code-line"><i style="--line: 72%"></i></div>
+                      <div class="code-line"><i style="--line: 48%"></i></div>
+                      <p><code>search.ts</code> <code>search.test.ts</code></p>
+                    </article>
+                    <article class="agent-task hera" data-coord-item>
+                      <div class="agent-heading"><span class="agent-mark">H</span><div><strong>Hera</strong><small>Adding budget limits</small></div><span class="task-status">Working</span></div>
+                      <div class="code-line"><i style="--line: 58%"></i></div>
+                      <div class="code-line"><i style="--line: 81%"></i></div>
+                      <p><code>budget.ts</code> <code>budget.test.ts</code></p>
+                    </article>
+                  </div>
+                  <div class="arbitration-card" data-coord-item>
+                    <span class="arbitration-icon">⚖</span>
+                    <div><strong>Conflict resolved before edits</strong><p>Hera starts on 8 files now and takes <code>index.ts</code> when Rhea is done.</p></div>
+                    <span class="arbitration-state">Ordered</span>
+                  </div>
+                  <div class="coord-promotion" data-coord-item>
+                    <span class="promotion-check">✓</span>
+                    <p><strong>Validated and promoted</strong><small>18 tests passed · commit <code>7ac41d2</code></small></p>
+                    <span class="promotion-pulse" aria-hidden="true"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="coord-float coord-float-left" data-coord-float aria-hidden="true">
+              <span>02</span><p><strong>Plans checked</strong>No overlapping edits</p>
+            </div>
+            <div class="coord-float coord-float-right" data-coord-float aria-hidden="true">
+              <span>✓</span><p><strong>Canonical</strong>One shared history</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="section" id="how">
         <div class="wrap">
           <div class="section-head reveal">
