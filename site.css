@@ -140,6 +140,22 @@ img {
   color: var(--text);
 }
 
+/* The reading line: a two-pixel hairline across the viewport's top edge that
+   fills left-to-right with page progress. site.js scrubs it through Motion's
+   scroll(), so it is driven by the visitor's own scrolling, never by a
+   clock. Without JavaScript — or under reduced motion, where site.js never
+   wires — it stays at zero width and may as well not exist. */
+.scroll-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 11;
+  height: 2px;
+  background: linear-gradient(90deg, var(--salmon), var(--lavender));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+
 /* -------------------------------------------------------------- buttons -- */
 
 .btn {
@@ -162,6 +178,35 @@ img {
 
 .btn-primary:hover {
   background: color-mix(in srgb, var(--salmon) 88%, white);
+}
+
+/* One pass of light across the primary button per hover-entry. Triggered by
+   hover, so coarse pointers never see it; the animation itself is stilled
+   with everything else in the reduced-motion block. */
+@media (hover: hover) {
+  .btn-primary::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgb(255 255 255 / 40%) 50%,
+      transparent 60%
+    );
+    transform: translateX(-130%);
+    pointer-events: none;
+  }
+
+  .btn-primary:hover::after {
+    animation: sheen 0.9s var(--ease-motion);
+  }
+}
+
+@keyframes sheen {
+  to {
+    transform: translateX(130%);
+  }
 }
 
 .btn-ghost {
@@ -194,8 +239,110 @@ img {
 /* ----------------------------------------------------------------- hero -- */
 
 .hero {
+  position: relative;
+  /* Clips the aurora's blurred edges so a colour field can hang half out of
+     frame without ever minting a horizontal scrollbar. */
+  overflow: hidden;
   padding: 180px 0 96px;
   text-align: center;
+}
+
+/* Everything readable sits above the aurora. */
+.hero .wrap {
+  position: relative;
+  z-index: 1;
+}
+
+/* The ambient ground: three colour fields in the site's own two accents,
+   blurred past recognition and drifting a few percent over half a minute.
+   The negative delays de-sync them, so they are already mid-wander on
+   arrival rather than setting off together. Continuous motion, so it is CSS
+   and stills in the reduced-motion block — the fields then simply hang there
+   as a static wash. site.js additionally thins the whole layer as the hero
+   scrolls away, handing the sections below a clean ground. */
+.aurora {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mask-image: linear-gradient(to bottom, black 55%, transparent 92%);
+  -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 92%);
+}
+
+.aurora i {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  will-change: transform;
+}
+
+.aurora i:nth-child(1) {
+  width: min(540px, 72vw);
+  height: min(540px, 72vw);
+  left: 10%;
+  top: -160px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--salmon) 24%, transparent),
+    transparent 72%
+  );
+  animation: aurora-a 26s ease-in-out -8s infinite alternate;
+}
+
+.aurora i:nth-child(2) {
+  width: min(460px, 60vw);
+  height: min(460px, 60vw);
+  right: 4%;
+  top: -80px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--lavender) 20%, transparent),
+    transparent 72%
+  );
+  animation: aurora-b 32s ease-in-out -18s infinite alternate;
+}
+
+.aurora i:nth-child(3) {
+  width: min(380px, 52vw);
+  height: min(380px, 52vw);
+  left: 36%;
+  top: 240px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--salmon) 14%, transparent),
+    transparent 72%
+  );
+  animation: aurora-c 38s ease-in-out -30s infinite alternate;
+}
+
+@keyframes aurora-a {
+  to {
+    transform: translate3d(9vw, 70px, 0) scale(1.12);
+  }
+}
+
+@keyframes aurora-b {
+  to {
+    transform: translate3d(-7vw, 90px, 0) scale(0.94);
+  }
+}
+
+@keyframes aurora-c {
+  to {
+    transform: translate3d(6vw, -60px, 0) scale(1.08);
+  }
+}
+
+/* Film grain over the colour fields only — a heavy blur leaves visible
+   banding on a ground this dark, and a few percent of static noise is the
+   difference between a gradient and a glow. Deliberately not page-wide: it
+   never sits over text. Static, so no motion gate applies; and if a stricter
+   CSP ever refuses the data: image, the only loss is the texture itself. */
+.aurora::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.05;
 }
 
 .eyebrow {
@@ -429,6 +576,17 @@ html.anim .hero-shot {
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.15;
+  /* Solid at the cap line, a shade quieter at the baseline. Static — it
+     asks nothing of the motion gate. Plain tokens rather than a color-mix,
+     because a browser that dropped the mix would drop the background while
+     honouring `color: transparent`, and an invisible heading is the one
+     failure this file must never risk. Kept off the hero h1, whose words
+     translate inside clipped boxes; a text-clipped background does not
+     travel with a transformed descendant. */
+  background: linear-gradient(180deg, var(--text) 30%, var(--muted));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .section-head p {
@@ -655,14 +813,42 @@ html.anim .reveal {
 /* ------------------------------------------------------------- cta band -- */
 
 .cta-band {
+  position: relative;
   text-align: center;
   padding: 140px 0 160px;
+}
+
+/* A floor glow under the last ask. Static and faint: identical for every
+   visitor, motion preference or none. */
+.cta-band::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -160px;
+  width: min(760px, 90vw);
+  height: 420px;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--salmon) 10%, transparent),
+    transparent 78%
+  );
+  pointer-events: none;
+}
+
+.cta-band .wrap {
+  position: relative;
 }
 
 .cta-band h2 {
   font-size: clamp(1.8rem, 3vw, 2.4rem);
   font-weight: 600;
   letter-spacing: -0.02em;
+  /* Same fade, same plain-token reasoning as .section-head h2. */
+  background: linear-gradient(180deg, var(--text) 30%, var(--muted));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .cta-band p {
@@ -753,7 +939,9 @@ html.anim .reveal {
   }
 
   .marquee-track,
-  .shimmer {
+  .shimmer,
+  .aurora i,
+  .btn-primary::after {
     animation: none;
   }
 
