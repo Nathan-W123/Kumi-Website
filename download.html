@@ -11,25 +11,34 @@
     <link rel="icon" href="kumi-logo.png">
     <script src="site-boot.js"></script>
     <link rel="stylesheet" href="site.css">
+    <link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
     <title>Kumi — download</title>
   </head>
   <body>
+    <div class="field" aria-hidden="true"></div>
+    <div class="field-veil" aria-hidden="true"></div>
+
     <nav class="site-nav">
       <div class="wrap">
         <a class="nav-brand" href=".">
           <img src="kumi-logo.png" alt="" width="24" height="24">
           Kumi
         </a>
-        <a class="nav-link" href="pricing">Pricing</a>
-        <a class="nav-link" href="download" aria-current="page">Download</a>
-        <a class="nav-link optional" href="/app#signin">Sign in</a>
-        <a class="btn btn-primary btn-small" href="/app#signup">Start free trial</a>
+        <div class="nav-links">
+          <a class="nav-link optional" href=".#how">How it works</a>
+          <a class="nav-link" href="pricing">Pricing</a>
+          <a class="nav-link" href="download" aria-current="page">Download</a>
+        </div>
+        <div class="nav-end">
+          <a class="nav-link optional" href="/app#signin">Sign in</a>
+          <a class="btn btn-primary btn-small" href="/app#signup">Start free trial</a>
+        </div>
       </div>
     </nav>
 
-    <header class="hero">
-      <div class="wrap">
-        <p class="eyebrow">Download</p>
+    <header class="hero hero-short">
+      <div class="wrap hero-lede">
+        <p class="chip"><span class="chip-dot"></span>Download</p>
         <h1>
           <span class="w"><span>The</span></span>
           <span class="w"><span>same</span></span>

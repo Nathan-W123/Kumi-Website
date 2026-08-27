@@ -43,6 +43,14 @@ const ROUTES = new Map([
   ["/site.css", ["site.css", "text/css; charset=utf-8"]],
   ["/site.js", ["site.js", "text/javascript; charset=utf-8"]],
   ["/site-boot.js", ["site-boot.js", "text/javascript; charset=utf-8"]],
+  ["/field.js", ["field.js", "text/javascript; charset=utf-8"]],
+  // The type, self-hosted: the deployment's CSP is `font-src 'self'`, so a
+  // Google Fonts link would silently never load and the page would render in
+  // whatever sans the visitor has. OFL notice ships beside them.
+  ["/fonts/bricolage-grotesque.woff2", ["fonts/bricolage-grotesque.woff2", "font/woff2"]],
+  ["/fonts/inter.woff2", ["fonts/inter.woff2", "font/woff2"]],
+  ["/fonts/jetbrains-mono.woff2", ["fonts/jetbrains-mono.woff2", "font/woff2"]],
+  ["/fonts/LICENSE.md", ["fonts/LICENSE.md", "text/plain; charset=utf-8"]],
   ["/kumi-logo.png", ["kumi-logo.png", "image/png"]],
   // Under /vendor/ for the reason the gateway puts it there: it is a minified
   // UMD build, and the checks that hold every first-party module to ES-module
