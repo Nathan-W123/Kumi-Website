@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#121110">
+    <meta name="description" content="The terms you agree to when you use KUMI: what stage the product is at, where your code lives, who owns what, what an agent writing code means for you, and how billing, termination and liability work.">
+    <link rel="icon" href="kumi-mark.png">
+    <script src="site-boot.js"></script>
+    <link rel="stylesheet" href="site.css">
+    <link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+    <title>KUMI — terms</title>
+  </head>
+  <body>
+    <!-- No canvas: the water carries the front page's argument, and a page of
+         prose is a place to read. The stylesheet's gradient is the ground. -->
+    <div class="field" aria-hidden="true"></div>
+    <div class="field-veil" aria-hidden="true"></div>
+
+    <nav class="site-nav">
+      <div class="wrap">
+        <a class="nav-brand" href=".">
+          <img src="kumi-mark.png" alt="KUMI" width="26" height="26">
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="about">About</a>
+          <a class="nav-link" href="faq">FAQ</a>
+          <a class="nav-link" href="security">Security</a>
+          <a class="nav-link optional" href="terms" aria-current="page">Terms</a>
+        </div>
+        <div class="nav-end">
+          <a class="nav-link" href="/app#signin">Sign in</a>
+          <a class="btn btn-primary btn-small" href="waitlist">Join the waitlist</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero hero-short">
+      <div class="wrap hero-lede">
+        <h1>
+          <span class="w"><span>Terms.</span></span>
+        </h1>
+        <p class="hero-tag">What you agree to when you use KUMI, written to be read.</p>
+        <p class="hero-note">Last updated 27 August 2026</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="section section-close">
+        <div class="wrap">
+          <div class="prose">
+            <h2>The short version</h2>
+            <p>This summary is here so you can learn the substance in half a
+              minute. The sections under it are the agreement itself, and if
+              the two ever disagree, the sections win.</p>
+
+            <p>KUMI is early. It is not generally available, and there is no
+              uptime promise. Your code is
+              yours and stays yours; while KUMI is hosted, a full copy of it
+              lives on the servers we run rather than on your machine or in
+              your cloud. Agents act on your instruction using the provider
+              accounts you connect, and the code they write is code you are
+              responsible for reading before it lands. Pricing is not settled
+              and nothing on the pricing page binds you until you actually
+              subscribe; if you do, Stripe takes the payment and we never see
+              your card number. Either of us can end this, and after it ends
+              we will keep your data for thirty days and then delete it — by
+              hand, because nothing in KUMI deletes it on a timer yet. The
+              service comes with no warranty, and our liability is capped.</p>
+
+            <h2>Who this agreement is with</h2>
+            <p>These terms are the agreement between you and KUMI, which they
+              call we, us and our. They cover the KUMI service, this site, the
+              dashboard, the command line tool and the waitlist.</p>
+
+            <h2>Accepting these terms</h2>
+            <p>You accept these terms by joining the waitlist, creating an
+              account, signing in, or using KUMI in any other way. If you do
+              not accept them, do not use KUMI.</p>
+
+            <h2>Signing up for a company</h2>
+            <p>You may be here for yourself or for an employer. If you accept
+              these terms on behalf of a company or any other organisation,
+              you are telling us that you have the authority to bind it, and
+              from then on you and it are both bound. In that case, you in
+              these terms means the organisation as well as the person
+              clicking. If you have no such authority, sign up for yourself
+              instead.</p>
+
+            <h2>Who can use KUMI</h2>
+            <p>You must be at least 18 years old to use KUMI, and you must not
+              be barred from using it under the law that applies to you. KUMI
+              is a professional tool built for software teams; it is not
+              designed for or directed at children, and we do not ask for
+              anyone's age.</p>
+
+            <h2>Your account</h2>
+            <p>You are responsible for your account and for everything done
+              through it, including by your colleagues, your API tokens and
+              your agents. Keep your password, your API tokens and your
+              session to yourself; a KUMI API token is a bearer credential, so
+              anyone holding it can act as you within the scopes it carries.
+              Tell us at kumi.support@gmail.com as soon as you think an
+              account or a token has been compromised, and revoke the token
+              yourself if you can. We may act on any request that arrives with
+              valid
+              credentials.</p>
+
+            <h2>What stage KUMI is at</h2>
+            <p>KUMI is pre-release. It is not generally available, it changes
+              often, and features can be added, altered or withdrawn without
+              notice. There is no uptime commitment, no service level
+              agreement, and no support commitment. It can be unavailable, it
+              can be wrong, and it can lose data. Keep your own copy of
+              anything you cannot afford to lose. For a repository you
+              imported, that means keeping the remote you imported it from.
+              For a repository created inside KUMI, our copy may be the only
+              one — push it somewhere of your own before you rely on it. We do
+              not offer a backup or restore service.</p>
+
+            <p>KUMI has not been through an external security audit, and we
+              hold no certifications of any kind.</p>
+
+            <h2>Where your code lives</h2>
+            <p>While KUMI is hosted, your code lives on our servers. When you
+              connect a repository, KUMI clones it in full — every file, every
+              branch, the whole history — onto the storage of the deployment
+              we run, and it keeps working copies there as well: one for each
+              running task, and one for each person editing a repository
+              through the browser. Your code does not stay on your own
+              machine, and it is not held in a cloud account of yours.
+              Nothing is pushed back to GitHub
+              unless you ask for it: import is a clone, and export is an
+              explicit one-way push onto a branch of its own.</p>
+
+            <p>Your organisation's data sits on the same deployment as other
+              customers', separated by the access control in the software
+              rather than by separate machines. A self-hosted deployment,
+              where the machine would be yours, is not open yet.</p>
+
+            <h2>Your content stays yours</h2>
+            <p>You keep every right you already have in your repositories,
+              your commits, your messages, your task descriptions and anything
+              else you put into KUMI. We claim no ownership of any of it.</p>
+
+            <p>So that KUMI can do the thing you are asking it to do, you give
+              KUMI a non-exclusive, worldwide, royalty-free licence to host,
+              copy, store, transmit, display and process that content, and to
+              pass it to the model provider you have connected in the cases
+              described just below. That licence exists for the purpose of
+              running the service for you, and for nothing else. It ends when
+              the content is deleted, except for the records described under
+              termination below.</p>
+
+            <p>We do not use your code or your conversations to train any
+              model.</p>
+
+            <p>KUMI sends content to a model provider when you or one of your
+              agents asks for work, and in one more case you should know
+              about: in a repository channel where an agent is connected, a
+              message that is not addressed to anyone is first checked by a
+              small model running inside KUMI, and if it might be a request
+              for work it is passed to the connected agent — which means it
+              reaches that provider. In that case the message does not travel
+              alone: up to the eight channel messages before it go with it, so
+              the agent can tell a request from a conversation. Nothing else
+              is sent. What the provider
+              then does with it is between you and them.</p>
+
+            <p>How we handle personal data — what we collect, why, and who it
+              goes to — is set out in our <a href="privacy">privacy
+              policy</a>, which forms part of these terms.</p>
+
+            <h2>Agents write code; you own the review</h2>
+            <p>An agent in KUMI acts on your instruction. When you ask for
+              work, KUMI starts the provider's own tool on our servers, in an
+              isolated worktree of your repository, using the provider account
+              you connected. What that agent writes is code you are
+              responsible for reviewing.</p>
+
+            <p>KUMI coordinates the work. It checks a plan before granting a
+              workspace, leases files so two agents do not quietly edit the
+              same one, runs the validation commands you have configured, and
+              can require approval before a change is promoted. That is
+              coordination, not review. We do not read your agents' output for
+              you, and we do not warrant that anything an agent produces is
+              correct, secure, licensable, non-infringing or fit for any
+              purpose. Agents make mistakes, including confident ones. Treat
+              every change an agent proposes the way you would treat a change
+              from someone you have never met.</p>
+
+            <p>The validation commands you configure are commands you have
+              chosen, and they run on our deployment. Do not configure a
+              command you would not want run.</p>
+
+            <h2>The provider accounts you connect</h2>
+            <p>KUMI runs your agents on credentials you supply — your own
+              account or subscription with the model provider, and where you
+              use it, your own GitHub token. You are responsible for those
+              accounts: for having the right to use them, for following that
+              provider's terms, and for whatever they cost you. We store the
+              credential encrypted and hand it to the provider's own tool when
+              it runs, and we delete the credential we hold when you
+              disconnect that provider.</p>
+
+            <p>We are not a party to your agreement with any provider, we do
+              not control what a provider retains or does with what it
+              receives, and we are not responsible for a provider changing its
+              terms, its prices or its availability.</p>
+
+            <h2>Using KUMI fairly</h2>
+            <p>Do not use KUMI to do anything illegal; do not upload code or
+              data you do not have the right to give us; do not try to break,
+              overload or work around the limits of the service; do not use
+              another person's account or credentials; do not probe, scan or
+              attack the deployment or try to reach another customer's data;
+              do not resell KUMI or offer it to others as your own service;
+              and do not use it to produce malware, spam, or code meant to
+              cause harm. You are responsible for what the people and agents
+              on your account do with it.</p>
+
+            <h2>Fees and billing</h2>
+            <p>Joining the waitlist is free and commits you to nothing. Paid
+              plans are still being settled while KUMI is pre-release, so a
+              price shown on the pricing page can change before you subscribe,
+              and no paid term binds you until you actually do. When you do subscribe, the price, the billing period,
+              any trial and the seat count shown to you at that moment are the
+              terms of your subscription.</p>
+
+            <p>Payments are handled by Stripe. You enter your card details on
+              Stripe's own pages; we never see or store your card number. We
+              store the Stripe customer and subscription identifiers and the
+              state of your subscription, and your email address is sent to
+              Stripe so it can identify the customer record. The number of
+              paid seats on your organisation is counted by KUMI and sent to
+              Stripe as a quantity. Fees are exclusive of taxes, which you are
+              responsible for where they apply, and payments are
+              non-refundable except where the law requires otherwise.</p>
+
+            <h2>Suspension and termination</h2>
+            <p>You can stop using KUMI whenever you like. There is no
+              self-serve delete button yet, so ask us at
+              kumi.support@gmail.com and we will close the account by
+              hand.</p>
+
+            <p>We may suspend or limit access to KUMI, with as much notice as
+              the circumstances allow, if we believe an account is being used
+              in breach of these terms, is putting the service or other
+              customers at risk, or has been compromised. We may terminate
+              this agreement for a material breach that is not fixed within a
+              reasonable time after we ask. Because KUMI is pre-release, we
+              may also stop offering the service, or any part of it, at any
+              time; if we do, we will tell you and give you a fair chance to
+              get your data out first.</p>
+
+            <h2>What happens to your data when things end</h2>
+            <p>After your account or your organisation is terminated, by you
+              or by us, we will keep your data for 30 days and then delete it.
+              The window is there so you can ask for a copy or change your
+              mind. We should be plain about how this works today: KUMI is
+              pre-release and has no automated deletion, so this is a
+              commitment we carry out by hand when you ask us to close the
+              account — not something the software does on a timer.</p>
+
+            <p>Two more things you should know. There is no packaged export
+              today. You can push a repository to a GitHub remote of your own,
+              and you can read your audit timeline in the app. For anything
+              else — your threads, or one copy of the whole record — write to
+              kumi.support@gmail.com and we will get it to you by hand. And KUMI keeps an append-only, hash-chained audit
+              log, so that an entry cannot be changed or removed without the
+              record showing it — the database itself refuses an update, and
+              refuses a deletion unless an operator checkpoint already covers
+              the rows. Be plain about the limit: that makes tampering
+              visible, not impossible, because anyone with write access to the
+              database could recompute the chain. Entries in that log that
+              refer to a user are not removed by the 30-day deletion, and we
+              keep it as the integrity record of the system.</p>
+
+            <p>Deleting a repository inside KUMI removes our copy of the
+              repository and the work records tied to it. Not everything KUMI
+              made from that repository goes at the same moment — working
+              copies made for editing, and images posted into a channel, are
+              covered by the account deletion above rather than by deleting
+              the repository.</p>
+
+            <h2>Feedback</h2>
+            <p>If you send us an idea, a bug report or a suggestion, we may
+              use it to improve KUMI without owing you anything for it. You
+              keep whatever rights you have in it; you are simply not
+              obliged to send it, and we are not obliged to keep it
+              confidential unless we have agreed separately in writing.</p>
+
+            <h2>No warranties</h2>
+            <p>KUMI IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY
+              OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING ANY IMPLIED WARRANTY
+              OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE OR
+              NON-INFRINGEMENT.</p>
+
+            <p>In plainer words: we do not promise that KUMI will be
+              available, uninterrupted, free of errors or secure against every
+              attack, that it will not lose data, or that anything an agent
+              writes through it will be correct or safe to ship. Nothing
+              anyone says in a demo, an email or a chat adds a warranty that
+              is not written here. Some places do not allow warranties to be
+              excluded, and if you are somewhere that does not, this section
+              applies to you only as far as the law allows.</p>
+
+            <h2>Limits on our liability</h2>
+            <p>TO THE FULLEST EXTENT PERMITTED BY LAW, KUMI WILL NOT BE
+              LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL
+              OR PUNITIVE DAMAGES, OR FOR ANY LOST PROFITS, LOST REVENUE, LOST
+              BUSINESS, OR LOST OR CORRUPTED CODE OR DATA, ARISING OUT OF OR
+              RELATING TO KUMI, WHETHER OR NOT WE WERE TOLD SUCH DAMAGES WERE
+              POSSIBLE.</p>
+
+            <p>OUR TOTAL LIABILITY FOR ALL CLAIMS RELATING TO KUMI IS LIMITED
+              TO THE GREATER OF THE AMOUNTS YOU PAID US IN THE TWELVE MONTHS
+              BEFORE THE EVENT GIVING RISE TO THE CLAIM, OR ONE HUNDRED US
+              DOLLARS.</p>
+
+            <p>These limits do not apply to anything that cannot be limited
+              under the law that applies to you.</p>
+
+            <h2>Your indemnity</h2>
+            <p>You will defend KUMI against any third-party claim arising out
+              of your content, your use of KUMI, your breach of
+              these terms, your breach of a provider's terms, or code an agent
+              produced for you that you then used or shipped — and you will
+              pay any damages, costs and reasonable legal fees finally awarded
+              or agreed in settlement. We will tell you about the claim
+              promptly and give you control of the defence, and we may take
+              part with our own lawyers at our own cost.</p>
+
+            <h2>Changes to these terms</h2>
+            <p>We may change these terms as KUMI changes. When we do, we will
+              update the date at the top of this page, and where a change
+              matters and we have a way to reach you, we will tell you.
+              Continuing to use KUMI after a change means you accept it. If
+              you do not accept it, stop using KUMI and ask us to close your
+              account.</p>
+
+            <h2>Governing law and where disputes go</h2>
+            <p>These terms are governed by the laws of the State of
+              California, United States, without regard to its conflict of
+              laws rules. Any dispute arising out of or relating to these
+              terms or to KUMI will be brought only in the state or federal
+              courts located in California, and both of us agree to the
+              jurisdiction and venue of those courts.</p>
+
+            <h2>Odds and ends</h2>
+            <p>These terms are the whole agreement between us about KUMI and
+              replace anything said before. If any part of them is held
+              unenforceable, the rest still stands. If we do not enforce
+              something straight away, we have not given it up. You may not
+              transfer this agreement without our written consent; we may
+              transfer it to a successor of the business. Nobody other than
+              you and KUMI gets rights under it. Neither of us is liable for a
+              failure caused by something genuinely outside our
+              control. Sections that are meant to survive termination —
+              ownership, disclaimers, liability, indemnity and this one — do
+              survive it.</p>
+
+            <h2>How to reach us</h2>
+            <p>Write to us at kumi.support@gmail.com. That address is also how
+              you close an account, ask for a copy of your data, or
+              tell us about a security problem — and while KUMI is
+              pre-release, we would much rather hear about a security problem
+              early.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span class="tagline">KUMI — the coordination layer between your
+          agents and your codebase.</span>
+        <a href="about">About</a>
+        <a href="faq">FAQ</a>
+        <a href="security">Security</a>
+        <a href="privacy">Privacy</a>
+        <a href="terms">Terms</a>
+        <span class="legal">© 2026 KUMI.</span>
+      </div>
+    </footer>
+
+    <script src="vendor/motion/motion.js"></script>
+    <script type="module" src="site.js"></script>
+  </body>
+</html>

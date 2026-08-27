@@ -1,35 +1,42 @@
 # Kumi — marketing site
 
-The public face of [Kumi](https://github.com/Nathan-W123/agentic-git): three
-pages, one stylesheet, two small ES modules, and a vendored copy of
+The public face of [Kumi](https://github.com/Nathan-W123/agentic-git): eight
+pages, one stylesheet, three small ES modules, and a vendored copy of
 [Motion](https://motion.dev) (MIT — licence in `vendor/motion/LICENSE.md`).
 No framework, no bundler, no build step.
 
 ## Where this is served from
 
-The **source of truth lives in the product repository** at
-`apps/web/public/site/`, and production serves it from the same gateway that
-serves the app — deliberately: the session cookie is `SameSite=Strict`, and
-sign-up *is* billing, so the page selling the product posts to routes on its
-own origin.
+**This repository is the source of truth.** It used to be a mirror: the site
+lived in the product repository at `apps/web/public/site/` and the gateway
+served it beside the app. That is over. The gateway now answers its own
+origin with the dashboard, because a deployment whose front door is an
+advertisement for itself is not what that deployment is for.
 
-| URL         | File            |
-|-------------|-----------------|
-| `/`         | `index.html`    |
-| `/pricing`  | `pricing.html`  |
-| `/download` | `download.html` |
-| `/app`      | the Kumi dashboard (not in this repo) |
+| URL        | File            |
+|------------|-----------------|
+| `/`        | `index.html`    |
+| `/pricing` | `pricing.html`  |
+| `/about`   | `about.html`    |
+| `/faq`     | `faq.html`      |
+| `/security`| `security.html` |
+| `/privacy` | `privacy.html`  |
+| `/terms`   | `terms.html`    |
+| `/waitlist`| `waitlist.html` |
+| `/download`| `download.html` |
+| `/app`     | the Kumi deployment (not in this repo) |
 
-This repository mirrors the site portion. If you edit here, carry the change
-back to `apps/web/public/site/` (or vice versa) — the gateway serves that
-copy, not this one.
+Nothing carries back to the product repository any more; there is no second
+copy to keep in step.
 
-One page deliberately has no counterpart there. `/download` in production is
-served by the dashboard, from `apps/web/public/download.html`, and that page
-is styled with the dashboard's stylesheet rather than this one — 315 KB of
-CSS carried into a marketing mirror is not a trade worth making. The version
-here is the same links in the site's own styling. The links are the thing
-that must not drift; see **Downloads** below.
+### One thing the move costs
+
+The waitlist form posts to `/api/v1/waitlist`, which is a route on the
+**gateway**, not on this server. While the site was served from the gateway
+that was a same-origin POST and it worked. Served from anywhere else it is
+cross-origin, and it will fail until either the form posts at the deployment's
+absolute address with CORS allowed for this origin, or this site is served
+behind something that proxies `/api/` through. That decision is open.
 
 ## Running it
 
@@ -37,9 +44,9 @@ that must not drift; see **Downloads** below.
 npm start          # http://127.0.0.1:4173
 ```
 
-`server.mjs` is the whole thing: no dependencies, and it holds the same
-address→file table the gateway builds from `SITE_FILES` in
-`apps/web/src/assets.ts`. Read the two side by side when either changes.
+`server.mjs` is the whole thing: no dependencies, and `ROUTES` in it is the
+address→file table — the one that used to have to agree with `SITE_FILES` in
+the product repository, and now simply *is* the answer.
 
 `PORT` and `HOST` are honoured, which is what makes this work under Kumi's own
 preview button — press play on this repository and it runs `npm start` on a
@@ -83,6 +90,29 @@ the deployment rather than something inside the preview. `site-boot.js`
 forwards to it only from `/` for the same reason: served anywhere else, its
 installed-shell tell fires inside the preview and replaces the site with the
 real app.
+
+## Tests
+
+```sh
+npm test
+```
+
+`site.test.mjs` is the suite that came with the site when it moved out of the
+product repository, plus a few checks that only became possible here. It holds
+the things nothing else can: that every module parses and every stylesheet's
+braces balance (nothing compiles or lints these files, and a stray top-level
+`}` makes a browser silently swallow the *next* rule); that only `site.js` may
+add the `anim` class that hides content, so a broken module graph leaves the
+page readable rather than blank; that every `animation:` sits behind the
+reduced-motion gate; that no page reference is root-absolute except `/app`, so
+the pages survive being served under a path prefix; that no page reaches a
+third-party host; that every internal link resolves to an address `ROUTES`
+actually serves; and that every installer filename matches what the packager
+builds, compared case-sensitively — a mis-cased release asset is a 404, not a
+spelling preference.
+
+Each test carries a comment saying which regression it exists to catch. Most
+of them are there because that regression really shipped.
 
 ## Deploying
 

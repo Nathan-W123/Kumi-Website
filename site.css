@@ -695,6 +695,21 @@ strong {
   text-wrap: pretty;
 }
 
+/* The site's global rule strips links bare, which is right in a nav and
+   wrong in a sentence: a legal page that points at another legal page has
+   to make that pointer visible. Underlined rather than coloured, so the
+   paragraph keeps its own voice. */
+.prose a {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--text) 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+.prose a:hover {
+  text-decoration-color: var(--salmon);
+}
+
 /*
  * The waitlist form.
  *
