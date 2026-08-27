@@ -79,7 +79,7 @@ export const ROUTES = new Map([
  * 404: the button does what the button says. Override for a preview that
  * should point at a staging deployment, or a local control plane.
  */
-const APP_ORIGIN = process.env.KUMI_APP_ORIGIN ?? "https://kumi.up.railway.app";
+export const APP_ORIGIN = process.env.KUMI_APP_ORIGIN ?? "https://kumi.up.railway.app";
 
 const port = Number(process.env.PORT ?? 4173);
 const host = process.env.HOST ?? "127.0.0.1";
@@ -112,6 +112,70 @@ async function readRequestBody(request) {
 }
 
 /**
+ * The headers a proxied submission carries to the gateway.
+ *
+ * The origin line is the whole reason this function exists to be tested. The
+ * gateway guards its waitlist the way it guards every state-changing route:
+ * the Origin header has to be one it recognises. A server-side fetch sends no
+ * Origin header at all unless told to, so the proxy's forward arrived
+ * origin-less and the gateway answered
+ * {"error":{"code":"origin_rejected","message":"Request origin is not
+ * allowed"}} — which a phone then displayed as the entire page. The one
+ * origin the gateway is certain to allow is its own: the form began life
+ * served by the gateway, same-origin, and worked. So the proxy names it
+ * explicitly, and never repeats whatever origin the browser sent here — a
+ * preview's address is not something the gateway can be expected to know.
+ */
+export function waitlistUpstreamHeaders(incoming) {
+  return {
+    "content-type": incoming["content-type"] ?? "application/octet-stream",
+    accept: incoming.accept ?? "text/html",
+    origin: new URL(APP_ORIGIN).origin,
+  };
+}
+
+/**
+ * What a browser that navigated the form itself is shown when the gateway
+ * says no.
+ *
+ * Without JavaScript — or before it, or after it failed to load — a submit is
+ * a document navigation, and whatever comes back IS the page. The gateway
+ * states its errors in JSON whatever the Accept header said, and that JSON,
+ * relayed faithfully, rendered as the whole site on a phone. Refusing is
+ * allowed; a screenful of raw JSON is not. Keep the gateway's words, say them
+ * in the site's own voice, and offer the way back.
+ */
+export function waitlistFailurePage(bytes) {
+  let reason = "The waitlist could not take the address just now.";
+  try {
+    const parsed = JSON.parse(bytes.toString("utf8"));
+    const message =
+      typeof parsed?.error === "string" ? parsed.error : parsed?.error?.message;
+    if (typeof message === "string" && message.trim() !== "") {
+      reason = message;
+    }
+  } catch {
+    // Not JSON after all; the generic line above already covers it.
+  }
+  const safe = reason.replace(
+    /[&<>"']/gu,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+  return `<!doctype html>
+<meta charset="utf-8">
+<title>Waitlist — Kumi</title>
+<link rel="stylesheet" href="/site.css">
+<div class="wrap" style="padding: 96px 0">
+  <p class="eyebrow">Waitlist</p>
+  <h1 style="font-size: 32px; letter-spacing: -0.02em">That did not go through.</h1>
+  <p class="sub" style="margin-top: 16px">${safe} Please go back and try again.</p>
+  <p style="margin-top: 24px"><a class="btn btn-primary" href="/">Back to the site</a></p>
+</div>
+`;
+}
+
+/**
  * Keep the marketing origin as the form's front door while the deployment
  * remains the system that owns the waitlist. This also preserves the plain
  * HTML response for a browser without JavaScript and the JSON response used
@@ -130,30 +194,27 @@ async function proxyWaitlist(request, response) {
     return;
   }
 
+  const wantsJson = request.headers.accept?.includes("application/json") === true;
   try {
     const reply = await fetch(new URL(WAITLIST_PATH, APP_ORIGIN), {
       method: "POST",
-      headers: {
-        "content-type": request.headers["content-type"] ?? "application/octet-stream",
-        accept: request.headers.accept ?? "text/html",
-      },
+      headers: waitlistUpstreamHeaders(request.headers),
       body,
       redirect: "manual",
     });
     const bytes = Buffer.from(await reply.arrayBuffer());
-    send(
-      response,
-      reply.status,
-      reply.headers.get("content-type") ?? "application/octet-stream",
-      bytes,
-    );
+    const type = reply.headers.get("content-type") ?? "application/octet-stream";
+    if (!reply.ok && !wantsJson && type.includes("application/json")) {
+      send(response, reply.status, "text/html; charset=utf-8", waitlistFailurePage(bytes));
+      return;
+    }
+    send(response, reply.status, type, bytes);
   } catch {
-    const json = request.headers.accept?.includes("application/json") === true;
     send(
       response,
       502,
-      json ? "application/json; charset=utf-8" : "text/plain; charset=utf-8",
-      json
+      wantsJson ? "application/json; charset=utf-8" : "text/plain; charset=utf-8",
+      wantsJson
         ? JSON.stringify({ error: "The waitlist service is unavailable." })
         : "The waitlist service is unavailable. Please try again.",
     );

@@ -29,7 +29,7 @@
 
 // Read by the boot script's ?why diagnostics: proof this module's graph
 // loaded, and which revision of it.
-window.__kumiSiteRev = "w13";
+window.__kumiSiteRev = "w14";
 
 // A breadcrumb per top-level step, printed by the ?why panel. On one phone
 // the module provably ran its first statement and provably reached none of
@@ -222,6 +222,10 @@ function wireWaitlist(form) {
     // Read straight off the form, so a field added to the markup travels
     // without a matching edit here.
     const answers = Object.fromEntries(new FormData(form).entries());
+    // The server's own words when it refuses. Only what the server actually
+    // said lands here — never a browser's "Failed to fetch" — so the catch
+    // below can tell a named refusal from a network that simply died.
+    let refusal = "";
     fetch(form.action, {
       method: "POST",
       headers: {
@@ -232,6 +236,15 @@ function wireWaitlist(form) {
     })
       .then(async (reply) => {
         if (!reply.ok) {
+          try {
+            const said = (await reply.json()).error;
+            const message = typeof said === "string" ? said : said.message;
+            if (typeof message === "string" && message !== "") {
+              refusal = message;
+            }
+          } catch (ignored) {
+            // The body was not JSON; the status alone will have to do.
+          }
           throw new Error(String(reply.status));
         }
         const data = await reply.json();
@@ -245,10 +258,16 @@ function wireWaitlist(form) {
       })
       .catch(() => {
         say.classList.add("bad");
-        // No invented support address here: there is not one to give yet, and
-        // a page that tells somebody to write to a mailbox nobody reads is
-        // worse than one that simply says it failed.
-        say.textContent = "That did not reach the server. Please try again.";
+        // A named refusal on the screen is what turns the next phone
+        // screenshot into a diagnosis. When there is no name — the network
+        // died, the answer was not JSON — no invented support address here:
+        // there is not one to give yet, and a page that tells somebody to
+        // write to a mailbox nobody reads is worse than one that simply says
+        // it failed.
+        say.textContent =
+          refusal === ""
+            ? "That did not reach the server. Please try again."
+            : refusal + " Please try again.";
       })
       .finally(() => {
         button.disabled = false;

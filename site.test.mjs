@@ -33,7 +33,12 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { ROUTES } from "./server.mjs";
+import {
+  APP_ORIGIN,
+  ROUTES,
+  waitlistFailurePage,
+  waitlistUpstreamHeaders,
+} from "./server.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -196,6 +201,69 @@ test("the front-page waitlist starts and finishes in place", () => {
   const server = read("server.mjs");
   assert.match(server, /pathname === WAITLIST_PATH/u);
   assert.match(server, /new URL\(WAITLIST_PATH, APP_ORIGIN\)/u);
+});
+
+test("the proxied waitlist submission carries an origin the gateway allows", () => {
+  /*
+   * The rejection that reached a phone as a page of JSON — twice. The gateway
+   * guards its waitlist with an origin check, and a server-side fetch sends
+   * no Origin header at all unless told to, so the proxy's forward arrived
+   * origin-less and the gateway answered
+   * {"error":{"code":"origin_rejected","message":"Request origin is not
+   * allowed"}}. The one origin the gateway is certain to accept is its own —
+   * the form began life served by the gateway, same-origin, and worked — so
+   * every forward has to say it explicitly.
+   */
+  const sent = waitlistUpstreamHeaders({
+    "content-type": "application/json",
+    accept: "application/json",
+  });
+  assert.equal(sent.origin, new URL(APP_ORIGIN).origin);
+  // An origin, not an address: scheme and host only, nothing after the host.
+  assert.match(sent.origin, /^https?:\/\/[^/]+$/u);
+  // What the browser asked for still travels.
+  assert.equal(sent["content-type"], "application/json");
+  assert.equal(sent.accept, "application/json");
+
+  // A browser posting the form natively sends its own Origin — the preview's
+  // address, which the gateway has never heard of. The proxy must not repeat
+  // it upstream.
+  const forwarded = waitlistUpstreamHeaders({
+    origin: "https://preview.example.test",
+  });
+  assert.equal(forwarded.origin, new URL(APP_ORIGIN).origin);
+  // And a submission with no stated wants still reads as the plain form post
+  // it is.
+  assert.equal(forwarded.accept, "text/html");
+});
+
+test("a navigated waitlist refusal is a page, not a screenful of JSON", () => {
+  /*
+   * Without JavaScript — or before it, or on the phone where it never ran —
+   * a submit is a document navigation and the response IS the page. The
+   * gateway states its errors in JSON whatever the Accept header said, and
+   * that JSON, relayed faithfully, rendered as the entire site. The proxy
+   * translates: the gateway's words, the site's voice, a way back.
+   */
+  const refusal = waitlistFailurePage(
+    Buffer.from(
+      JSON.stringify({
+        error: { code: "origin_rejected", message: "Request origin is not allowed" },
+      }),
+    ),
+  );
+  assert.match(refusal, /<!doctype html>/u);
+  assert.match(refusal, /Request origin is not allowed/u);
+  assert.match(refusal, /href="\/"/u, "the way back to the site");
+
+  // The gateway's words are quoted, never interpreted as markup.
+  const hostile = waitlistFailurePage(
+    Buffer.from(JSON.stringify({ error: { message: "<script>alert(1)</script>" } })),
+  );
+  assert.doesNotMatch(hostile, /<script>/u);
+
+  // A body that is not JSON at all still comes out as a legible page.
+  assert.match(waitlistFailurePage(Buffer.from("upstream fell over")), /<!doctype html>/u);
 });
 
 test("no marketing address is cached beyond the checkout that served it", () => {
