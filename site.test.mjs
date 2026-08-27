@@ -33,7 +33,14 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { ROUTES } from "./server.mjs";
+import {
+  APP_ORIGIN,
+  ROUTES,
+  csrfTokenFromCookies,
+  waitlistFailurePage,
+  waitlistSuccessPage,
+  waitlistUpstreamHeaders,
+} from "./server.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -165,6 +172,158 @@ test("the front page is the marketing page", () => {
   // In the monorepo this half of the test was the one that caught the
   // dashboard document being served at the origin root instead of the site.
   assert.match(read("index.html"), /coordination layer/iu);
+});
+
+test("the front-page waitlist starts and finishes in place", () => {
+  const page = read("index.html");
+  const hero = page.slice(
+    page.indexOf('<header class="hero">'),
+    page.indexOf("</header>"),
+  );
+
+  assert.doesNotMatch(hero, /Why KUMI\?/u);
+  assert.doesNotMatch(hero, /href="waitlist"/u);
+  // Relative, like every other reference in these pages. Root-absolute, the
+  // post escapes the preview proxy's path prefix and lands on the
+  // deployment's own /api/v1/waitlist — which has never heard of the
+  // preview and answers a phone with a page of origin_rejected JSON. The
+  // proxy in server.mjs only helps if the post actually reaches it.
+  assert.match(hero, /<form[\s\S]*action="api\/v1\/waitlist"/u);
+  assert.doesNotMatch(hero, /action="\/api\/v1\/waitlist"/u);
+  assert.match(hero, /<input[\s\S]*name="email"[\s\S]*type="email"[\s\S]*required/u);
+  assert.match(hero, /<button[^>]*type="submit">Join the waitlist<\/button>/u);
+
+  const script = read("site.js");
+  assert.match(script, /fetch\(form\.action,/u);
+  assert.match(script, /event\.preventDefault\(\)/u);
+  assert.match(script, /headers\["x-csrf-token"\] = token/u);
+  assert.match(script, /credentials: "same-origin"/u);
+  assert.doesNotMatch(
+    script,
+    /^import .*\.\/field\.js/mu,
+    "the waitlist must not wait for the optional WebGL module to load",
+  );
+  assert.ok(
+    script.indexOf('mark("waitlist")') < script.indexOf('import("./field.js")'),
+    "the waitlist must be wired before the optional WebGL module is loaded",
+  );
+
+  const server = read("server.mjs");
+  assert.match(server, /pathname === WAITLIST_PATH/u);
+  assert.match(server, /new URL\(WAITLIST_PATH, APP_ORIGIN\)/u);
+});
+
+test("the proxied waitlist submission carries an origin the gateway allows", () => {
+  /*
+   * The rejection that reached a phone as a page of JSON — twice. The gateway
+   * guards its waitlist with an origin check, and a server-side fetch sends
+   * no Origin header at all unless told to, so the proxy's forward arrived
+   * origin-less and the gateway answered
+   * {"error":{"code":"origin_rejected","message":"Request origin is not
+   * allowed"}}. The one origin the gateway is certain to accept is its own —
+   * the form began life served by the gateway, same-origin, and worked — so
+   * every forward has to say it explicitly.
+   */
+  const sent = waitlistUpstreamHeaders({
+    "content-type": "application/json",
+    accept: "application/json",
+  });
+  assert.equal(sent.origin, new URL(APP_ORIGIN).origin);
+  // An origin, not an address: scheme and host only, nothing after the host.
+  assert.match(sent.origin, /^https?:\/\/[^/]+$/u);
+  // What the browser asked for still travels.
+  assert.equal(sent["content-type"], "application/json");
+  assert.equal(sent.accept, "application/json");
+
+  // A browser posting the form natively sends its own Origin — the preview's
+  // address, which the gateway has never heard of. The proxy must not repeat
+  // it upstream.
+  const forwarded = waitlistUpstreamHeaders({
+    origin: "https://preview.example.test",
+  });
+  assert.equal(forwarded.origin, new URL(APP_ORIGIN).origin);
+  // And a submission with no stated wants still reads as the plain form post
+  // it is.
+  assert.equal(forwarded.accept, "text/html");
+});
+
+test("the waitlist preserves an existing session's CSRF pair", () => {
+  const cookie =
+    "theme=dark; __Host-kumi-session=session-secret; " +
+    "__Host-kumi-csrf=token%2Fwith%2Bencoding";
+  assert.equal(csrfTokenFromCookies(cookie), "token/with+encoding");
+
+  // JavaScript echoes the token itself. The relay still carries the cookies
+  // because the gateway needs the session and readable cookie as well as the
+  // header in order to validate the pair.
+  const scripted = waitlistUpstreamHeaders({
+    cookie,
+    "x-csrf-token": "token/with+encoding",
+  });
+  assert.equal(scripted.cookie, cookie);
+  assert.equal(scripted["x-csrf-token"], "token/with+encoding");
+
+  // A native form cannot author a custom header. The relay reads the same
+  // token from its cookie, so the no-JavaScript path remains functional too.
+  const native = waitlistUpstreamHeaders({ cookie });
+  assert.equal(native.cookie, cookie);
+  assert.equal(native["x-csrf-token"], "token/with+encoding");
+
+  // No CSRF cookie means an anonymous waitlist submission. Do not send
+  // unrelated cookies from the preview to a different deployment.
+  const anonymous = waitlistUpstreamHeaders({ cookie: "preview_session=not-for-kumi" });
+  assert.equal(anonymous.cookie, undefined);
+  assert.equal(anonymous["x-csrf-token"], undefined);
+});
+
+test("a navigated waitlist refusal is a page, not a screenful of JSON", () => {
+  /*
+   * Without JavaScript — or before it, or on the phone where it never ran —
+   * a submit is a document navigation and the response IS the page. The
+   * gateway states its errors in JSON whatever the Accept header said, and
+   * that JSON, relayed faithfully, rendered as the entire site. The proxy
+   * translates: the gateway's words, the site's voice, a way back.
+   */
+  const refusal = waitlistFailurePage(
+    Buffer.from(
+      JSON.stringify({
+        error: { code: "origin_rejected", message: "Request origin is not allowed" },
+      }),
+    ),
+  );
+  assert.match(refusal, /<!doctype html>/u);
+  assert.match(refusal, /Request origin is not allowed/u);
+  assert.match(refusal, /href="\/"/u, "the way back to the site");
+
+  // The gateway's words are quoted, never interpreted as markup.
+  const hostile = waitlistFailurePage(
+    Buffer.from(JSON.stringify({ error: { message: "<script>alert(1)</script>" } })),
+  );
+  assert.doesNotMatch(hostile, /<script>/u);
+
+  // A body that is not JSON at all still comes out as a legible page.
+  assert.match(waitlistFailurePage(Buffer.from("upstream fell over")), /<!doctype html>/u);
+});
+
+test("a navigated waitlist acceptance is a page too", () => {
+  /*
+   * The gateway answers yes in JSON as well, so the submit that finally
+   * worked would have filled the same phone's screen with {"added":true} —
+   * indistinguishable, to anyone not reading the braces, from the bug they
+   * reported three times. Success gets the same translation as refusal.
+   */
+  const first = waitlistSuccessPage(Buffer.from(JSON.stringify({ added: true })));
+  assert.match(first, /<!doctype html>/u);
+  assert.match(first, /You are on the list\./u);
+  assert.match(first, /href="\/"/u, "the way back to the site");
+
+  // The endpoint says added:false for an address it already holds, and the
+  // page says the same thing site.js says in place: no error, no drama.
+  const again = waitlistSuccessPage(Buffer.from(JSON.stringify({ added: false })));
+  assert.match(again, /You are already on the list\./u);
+
+  // An acceptance whose body cannot be read is still an acceptance.
+  assert.match(waitlistSuccessPage(Buffer.from("ok")), /You are on the list\./u);
 });
 
 test("no marketing address is cached beyond the checkout that served it", () => {
@@ -746,9 +905,14 @@ test("the pages survive being served under a path prefix", () => {
    * written by copying one of these, and the thing most easily "tidied" in the
    * copy is exactly the leading slash that is missing on purpose.
    */
+  // `action` scanned alongside `href` and `src` since the day a
+  // root-absolute form action slipped past this test: under the preview
+  // prefix the waitlist posted to the deployment's own API instead of the
+  // preview's proxy, and three phones in a row photographed the JSON it
+  // answered with.
   for (const { file } of pages()) {
     const html = read(file);
-    const absolute = [...html.matchAll(/(?:href|src)="(\/[^"]*)"/gu)]
+    const absolute = [...html.matchAll(/(?:href|src|action)="(\/[^"]*)"/gu)]
       .map((match) => match[1])
       .filter((target) => !target.startsWith("/app"));
     assert.deepEqual(
@@ -758,6 +922,28 @@ test("the pages survive being served under a path prefix", () => {
         `page's own directory: ${absolute.join(", ")}`,
     );
   }
+});
+
+test("every form action still resolves to the address the server proxies", () => {
+  /*
+   * The other half of the relative-action rule. Relative keeps a post inside
+   * the preview prefix, but it is only correct because every page carrying a
+   * form sits at the origin root, where "api/v1/waitlist" resolves to
+   * "/api/v1/waitlist" — the one path server.mjs forwards to the gateway. A
+   * form copied onto a page served at another depth would resolve somewhere
+   * nothing answers, and nothing else here would say so.
+   */
+  const posts = [];
+  for (const { address, file } of pages()) {
+    const base = new URL(address, "http://site.invalid");
+    for (const m of read(file).matchAll(/action="([^"]*)"/gu)) {
+      posts.push(`${file}: ${new URL(m[1], base).pathname}`);
+    }
+  }
+  assert.deepEqual(posts, [
+    "index.html: /api/v1/waitlist",
+    "waitlist.html: /api/v1/waitlist",
+  ]);
 });
 
 test("every internal link resolves to an address the server serves", () => {

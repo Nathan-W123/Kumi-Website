@@ -27,11 +27,9 @@
  * cannot be drawn costs the field and nothing else.
  */
 
-import { startField } from "./field.js";
-
 // Read by the boot script's ?why diagnostics: proof this module's graph
 // loaded, and which revision of it.
-window.__kumiSiteRev = "w11";
+window.__kumiSiteRev = "w16";
 
 // A breadcrumb per top-level step, printed by the ?why panel. On one phone
 // the module provably ran its first statement and provably reached none of
@@ -61,6 +59,23 @@ function note(phase, error) {
   );
 }
 
+/*
+ * Forms are useful before any of the visual layer is. Wire them before
+ * asking the browser about motion, mounting the showcase, or loading the
+ * WebGL module: a failure in any of those optional features must never turn
+ * a submit into a document navigation to an API response.
+ *
+ * The declarations live below with the rest of the form code and are
+ * hoisted here. The module itself is at the end of every document, so the
+ * forms have already been parsed by the time this runs.
+ */
+try {
+  waitlist();
+  mark("waitlist");
+} catch (error) {
+  note("waitlist", error);
+}
+
 // Belt on the very first API call: a WebView with a broken matchMedia gets
 // a stand-in that reports motion as welcome and accepts no listeners,
 // rather than aborting the module three lines in.
@@ -78,6 +93,17 @@ try {
 const motion = window.Motion;
 mark("motion:" + typeof motion);
 const EASE = [0.32, 0.72, 0, 1];
+// The long decelerating tail for the big entrances: almost all of the
+// distance in the first third, then a settle slow enough to watch land.
+const EXPO = [0.16, 1, 0.3, 1];
+
+// Undo hooks for everything standing — see the header. Run at most once.
+const teardowns = [];
+
+// The source markup is a useful no-JavaScript fallback, but it predates the
+// actual product surface. Replace it before the motion gate is evaluated so
+// reduced-motion visitors see the same faithful Kumi UI, simply at rest.
+mountCoordinationShowcase();
 
 let stopField;
 let disarmed = false;
@@ -159,7 +185,7 @@ function disarm() {
  * line in this gate is allowed to be that line again.
  */
 /*
- * The waitlist form, wired whatever the motion gate decided.
+ * Every waitlist form, wired whatever the motion gate decided.
  *
  * Deliberately outside `wire()`. Everything in there is decoration and is
  * skipped when a reader asks for less motion; answering a form in place is
@@ -169,10 +195,51 @@ function disarm() {
  * that belongs behind that particular gate.
  */
 function waitlist() {
-  const form = document.querySelector(".join");
-  if (form === null) {
-    return;
+  // Ends-with, not equals: the attribute is relative in the markup —
+  // root-absolute, it escapes the preview proxy's path prefix and posts to
+  // the deployment's API instead of this site's — and an ends-with match
+  // also keeps a cached copy of the old absolute markup wired. `form.action`
+  // (the property, used by the submit handler) resolves the relative
+  // attribute against the page's real address, whatever depth it is at.
+  for (const form of document.querySelectorAll(
+    'form.join[action$="api/v1/waitlist"]',
+  )) {
+    wireWaitlist(form);
   }
+}
+
+/**
+ * The readable half of an existing Kumi session's CSRF pair.
+ *
+ * The product names this cookie; the marketing site only needs to recognise
+ * its purpose. Matching `csrf`/`xsrf` rather than copying the current name
+ * keeps an old page working if the cookie is hardened with a prefix later.
+ * Anonymous visitors have no such cookie and need no header.
+ */
+function csrfToken(cookies = document.cookie) {
+  for (const part of cookies.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator === -1) {
+      continue;
+    }
+    const name = part.slice(0, separator).trim();
+    if (!/(?:^|[-_])(?:csrf|xsrf)(?:[-_]|$)/iu.test(name)) {
+      continue;
+    }
+    const value = part.slice(separator + 1).trim();
+    try {
+      return decodeURIComponent(value);
+    } catch (error) {
+      // A cookie value need not be percent-encoded. If it merely contains a
+      // stray percent sign, the value the server issued is still the value
+      // it expects back.
+      return value;
+    }
+  }
+  return "";
+}
+
+function wireWaitlist(form) {
   const say = form.querySelector(".join-say");
   const button = form.querySelector("button");
   if (say === null || button === null) {
@@ -192,18 +259,40 @@ function waitlist() {
     // Read straight off the form, so a field added to the markup travels
     // without a matching edit here.
     const answers = Object.fromEntries(new FormData(form).entries());
+    // The server's own words when it refuses. Only what the server actually
+    // said lands here — never a browser's "Failed to fetch" — so the catch
+    // below can tell a named refusal from a network that simply died.
+    let refusal = "";
+    const headers = {
+      "content-type": "application/json",
+      accept: "application/json",
+    };
+    const token = csrfToken();
+    if (token !== "") {
+      // A signed-in browser sends its session cookies automatically. Echoing
+      // the readable CSRF cookie in this header completes that pair; without
+      // it the public form works signed out and is refused signed in.
+      headers["x-csrf-token"] = token;
+    }
     fetch(form.action, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        accept: "application/json",
-      },
+      headers,
+      credentials: "same-origin",
       body: JSON.stringify(answers),
     })
       .then(async (reply) => {
         // 202, not 200: the deployment has taken the address and somebody
         // will decide about it later, which is exactly what this is.
         if (!reply.ok) {
+          try {
+            const said = (await reply.json()).error;
+            const message = typeof said === "string" ? said : said.message;
+            if (typeof message === "string" && message !== "") {
+              refusal = message;
+            }
+          } catch (ignored) {
+            // The body was not JSON; the status alone will have to do.
+          }
           throw new Error(String(reply.status));
         }
         await reply.json();
@@ -218,24 +307,21 @@ function waitlist() {
       })
       .catch(() => {
         say.classList.add("bad");
-        // This is a cross-origin request: the site and the deployment are
-        // separate origins, so a browser that is refused by CORS lands here
-        // with nothing to inspect — indistinguishable from the server being
-        // down. Say what is true of both rather than guessing between them.
+        // A named refusal on the screen is what turns the next phone
+        // screenshot into a diagnosis. When there is no name — the network
+        // died, the answer was not JSON — no invented support address here:
+        // there is not one to give yet, and a page that tells somebody to
+        // write to a mailbox nobody reads is worse than one that simply says
+        // it failed.
         say.textContent =
-          "That did not reach the waitlist. Please try again in a moment.";
+          refusal === ""
+            ? "That did not reach the server. Please try again."
+            : refusal + " Please try again.";
       })
       .finally(() => {
         button.disabled = false;
       });
   });
-}
-
-try {
-  waitlist();
-  mark("waitlist");
-} catch (error) {
-  note("waitlist", error);
 }
 
 mark("gate-call");
@@ -269,6 +355,9 @@ function gate() {
   const onFlip = () => {
     if (reduceMotion.matches) {
       disarm();
+      for (const undo of teardowns.splice(0)) {
+        undo();
+      }
     }
   };
   try {
@@ -369,25 +458,44 @@ function field() {
     window.__kumiFieldState = "no canvas in the page";
     return;
   }
-  try {
-    stopField = startField(canvas, { progress, shift });
-    if (stopField !== undefined) {
-      // Tells the stylesheet the real water is running, so the CSS-only
-      // swell that stands in for it on machines without WebGL steps aside.
-      document.documentElement.classList.add("field-live");
-      window.__kumiFieldState = "running";
-    } else {
-      window.__kumiFieldState = "webgl2 unavailable — CSS swell instead";
-    }
-  } catch (error) {
-    // A shader that would not compile, or a context lost on creation. The
-    // stylesheet's swell is already behind the canvas and is a complete,
-    // living background on its own — but the reason is kept for the ?why
-    // overlay, because a silent catch is how this stayed undiagnosable.
-    stopField = undefined;
-    window.__kumiFieldState =
-      "crashed: " + (error instanceof Error ? error.message : String(error));
-  }
+  window.__kumiFieldState = "loading";
+  import("./field.js")
+    .then(({ startField }) => {
+      // The preference can change while the module is in flight. Do not
+      // briefly start a continuous animation after the reader has disabled
+      // it; the CSS swell is already suppressed by the same preference.
+      if (reduceMotion.matches) {
+        window.__kumiFieldState = "disabled by reduced motion";
+        return;
+      }
+      try {
+        stopField = startField(canvas, { progress, shift });
+        if (stopField !== undefined) {
+          // Tells the stylesheet the real water is running, so the CSS-only
+          // swell that stands in for it on machines without WebGL steps aside.
+          document.documentElement.classList.add("field-live");
+          window.__kumiFieldState = "running";
+        } else {
+          window.__kumiFieldState = "webgl2 unavailable — CSS swell instead";
+        }
+      } catch (error) {
+        fieldFailed(error);
+      }
+    })
+    .catch((error) => {
+      fieldFailed(error);
+    });
+}
+
+function fieldFailed(error) {
+  // A module that would not parse, a shader that would not compile, or a
+  // context lost on creation. The stylesheet's swell is already behind the
+  // canvas and is a complete, living background on its own — but the reason
+  // is kept for the ?why overlay, because a silent catch is how this stayed
+  // undiagnosable.
+  stopField = undefined;
+  window.__kumiFieldState =
+    "crashed: " + (error instanceof Error ? error.message : String(error));
 }
 
 /* ------------------------------------------------------------- helpers -- */
@@ -449,9 +557,14 @@ function typeInto(p, tick = 18) {
 /* ---------------------------------------------------------------- wire -- */
 
 function wire() {
-  const { animate, inView, stagger, hover, press } = motion;
+  const { animate, inView, stagger, hover, press, scroll } = motion;
   const fine =
     window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  // One switch aborts every listener the standing effects attach, so a
+  // teardown never has to enumerate them.
+  const halt = new AbortController();
+  teardowns.push(() => halt.abort());
+  const signal = halt.signal;
 
   /*
    * Every feature wires inside its own guard, and a failure is recorded by

@@ -265,7 +265,12 @@ main,
   padding-bottom: 40px;
 }
 
+/* The claims are the demo's caption row, so they hang from it rather than
+   opening a section of their own. The explicit top also holds on narrow
+   screens, where the blanket section padding would otherwise push them a
+   chapter away again. */
 #claims {
+  padding-top: 0;
   padding-bottom: 40px;
 }
 
@@ -504,6 +509,36 @@ strong {
   border-radius: 50%;
   background: var(--accent-ink);
   pointer-events: none;
+}
+
+/* One pass of light across the primary button per hover-entry. Triggered by
+   hover, so coarse pointers never see it — and declared, like every other
+   animation in this file, only where motion is welcome: a reader who asked
+   for stillness gets no sweep and no parked gradient to unrender. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .btn-primary::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgb(255 255 255 / 40%) 50%,
+      transparent 60%
+    );
+    transform: translateX(-130%);
+    pointer-events: none;
+  }
+
+  .btn-primary:hover::after {
+    animation: sheen 0.9s var(--ease-motion);
+  }
+}
+
+@keyframes sheen {
+  to {
+    transform: translateX(130%);
+  }
 }
 
 .btn-ghost {
@@ -799,6 +834,54 @@ strong {
   gap: 12px;
 }
 
+/* The front door asks for the only detail the waitlist needs. Kept separate
+   from the longer form's layout so the field and action read as one control. */
+.hero-join {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  width: min(100%, 480px);
+  margin: 10px auto 0;
+}
+
+.hero-join-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hero-join input {
+  min-width: 0;
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+}
+
+.hero-join .join-say {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+
+@media (max-width: 520px) {
+  .hero-join {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-join .btn {
+    width: 100%;
+  }
+
+  .hero-join .join-say {
+    grid-column: 1;
+  }
+}
+
 .hero-note {
   font-family: var(--mono);
   font-size: 11.5px;
@@ -1006,9 +1089,9 @@ strong {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 44px;
-  margin-top: 48px;
-  /* Matches the measure the manifesto held here, so the join with the demo
-     below is unchanged by the swap. */
+  /* Close enough to the demo above to read as its takeaways, not the start
+     of something new. */
+  margin-top: 24px;
   margin-bottom: 40px;
 }
 
@@ -2601,6 +2684,35 @@ strong {
   .site-footer .legal {
     margin-left: 0;
   }
+
+  .coordination { padding-top: 96px; }
+  .coordination-stage { min-height: 610px; margin-inline: -18px; padding: 24px 18px 56px; }
+  .coord-window { min-height: 520px; }
+  .coord-layout { grid-template-columns: 74px 1fr; }
+  .coord-sidebar { padding-inline: 8px; }
+  .repo { justify-content: center; padding-inline: 4px; }
+  .repo em,
+  .sidebar-label { display: none; }
+  .coord-thread { padding: 16px; }
+  .coord-float-left { left: 4px; top: 42%; }
+  .coord-float-right { right: 4px; bottom: 5%; }
+}
+
+@media (max-width: 600px) {
+  .coordination-copy { margin-bottom: 34px; }
+  .coordination-stage { min-height: 660px; }
+  .coord-topbar { grid-template-columns: 1fr auto; }
+  .coord-live { display: none; }
+  .coord-layout { grid-template-columns: 1fr; }
+  .coord-sidebar { display: none; }
+  .coord-thread { padding: 14px 12px 20px; }
+  .coord-agent-grid { grid-template-columns: 1fr; }
+  .coord-agent-grid .hera { display: none; }
+  .coord-float { min-width: 146px; }
+  .coord-float-left { left: 7px; top: auto; bottom: 2px; }
+  .coord-float-right { right: 7px; bottom: 2px; }
+  .arbitration-card { grid-template-columns: auto 1fr; }
+  .arbitration-state { display: none; }
 }
 
 /* ------------------------------------------------------- the motion gate -- */
@@ -2677,6 +2789,17 @@ html.anim .claim p {
 
   html.anim .hero h1 .w > span {
     transform: none;
+  }
+
+  html.anim [data-coord-item],
+  html.anim [data-coord-float] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .coord-window {
+    transform: none !important;
+    transition: none;
   }
 }
 

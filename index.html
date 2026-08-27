@@ -67,13 +67,35 @@
           </h1>
           <p class="hero-tag">Making development multiplayer.</p>
 
-          <!-- Two things to do, and only two: join, or find out why. The
-               second is an anchor, so it works before any script runs and
-               the browser's own smooth scrolling carries it. -->
-          <p class="hero-cta">
-            <a class="btn btn-primary" href="waitlist">Join the waitlist</a>
-            <a class="btn btn-ghost" href="#agents">Why KUMI?</a>
-          </p>
+          <!-- The first step happens here. site.js submits this form in place;
+               without JavaScript it remains an ordinary same-origin form.
+
+               The action is relative like every other reference in these
+               pages, and for the same reason: under the preview proxy's deep
+               path a root-absolute "/api/v1/waitlist" walks out of the
+               preview and posts to the deployment's own API — which rejects
+               the stranger with a page of JSON. Relative, the post stays
+               inside whatever prefix served this page and reaches the
+               server's proxy, which forwards it with an origin the gateway
+               accepts. -->
+          <form
+            class="hero-cta hero-join join"
+            method="post"
+            action="api/v1/waitlist"
+          >
+            <label class="hero-join-label" for="hero-join-email">Email address</label>
+            <input
+              id="hero-join-email"
+              name="email"
+              type="email"
+              required
+              autocomplete="email"
+              maxlength="254"
+              placeholder="Email address"
+            >
+            <button class="btn btn-primary" type="submit">Join the waitlist</button>
+            <p class="join-say" role="status" aria-live="polite"></p>
+          </form>
         </div>
 
       </div>
