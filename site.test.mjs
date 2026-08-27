@@ -1127,3 +1127,51 @@ test("every download the page offers is a file the packager actually builds", ()
     assert.ok(built.has(file), `the site offers ${file}, which nothing builds`);
   }
 });
+
+/*
+ * The waitlist form posts the names the deployment reads.
+ *
+ * This is the one form on the site and it talks to a service in another
+ * repository, which is the whole problem: `POST /api/v1/waitlist` reads
+ * `email`, `displayName`, `note` and `source`, and it ignores anything else
+ * in silence rather than refusing it. So a field renamed on this side is not
+ * an error anywhere — the form submits, the server answers 202, and what
+ * somebody typed is dropped on the floor.
+ *
+ * That is not hypothetical either. The site once posted `name`, `agents`,
+ * `company` and `teamSize` against a waitlist that has since been replaced by
+ * a different one, and every one of those would now vanish. Pinned as an
+ * exact set: a field added here without a matching field on the route is
+ * exactly as broken as one renamed.
+ */
+test("the waitlist form posts the fields the deployment actually reads", () => {
+  const page = read("waitlist.html");
+
+  // The API is not served from this origin, so this action has to be absolute
+  // and has to be the deployment. A relative one resolves against the site and
+  // 404s; a different host would post somebody's address somewhere else.
+  const action = /<form[^>]*\baction="([^"]+)"/u.exec(page)?.[1];
+  assert.equal(action, "https://kumi.up.railway.app/api/v1/waitlist");
+
+  const named = new Set(
+    [...page.matchAll(/<(?:input|textarea|select)[^>]*\bname="([^"]+)"/gu)].map(
+      (match) => match[1],
+    ),
+  );
+  assert.deepEqual(
+    [...named].sort(),
+    ["displayName", "email", "note", "source"],
+    "the form's field names have drifted from the route's",
+  );
+
+  // The route uses readJson and answers a form encoding with a 415, so the
+  // script has to send JSON — the browser's own submission cannot work.
+  const script = read("site.js");
+  const submit = script.slice(script.indexOf("function waitlist()"));
+  assert.match(submit, /"content-type":\s*"application\/json"/u);
+  assert.match(submit, /JSON\.stringify/u);
+
+  // A form collecting an address says where it goes, on the page, not only in
+  // a policy somebody would have to think to open.
+  assert.match(page, /<a\s+href="privacy">privacy policy<\/a>/u);
+});

@@ -281,6 +281,8 @@ function wireWaitlist(form) {
       body: JSON.stringify(answers),
     })
       .then(async (reply) => {
+        // 202, not 200: the deployment has taken the address and somebody
+        // will decide about it later, which is exactly what this is.
         if (!reply.ok) {
           try {
             const said = (await reply.json()).error;
@@ -293,13 +295,14 @@ function wireWaitlist(form) {
           }
           throw new Error(String(reply.status));
         }
-        const data = await reply.json();
-        // The endpoint answers the same whether or not the address was
-        // already there, so this says the same thing too.
-        say.textContent =
-          data.added === false
-            ? "You are already on the list. We will be in touch."
-            : "You are on the list. We will be in touch.";
+        await reply.json();
+        // One answer, always. The route deliberately replies the same way
+        // whether this address is new, already waiting, already approved, or
+        // already has an account — any difference would make the form a way
+        // to ask which addresses this deployment knows about — so saying
+        // anything more specific here would invent a distinction the server
+        // refused to make.
+        say.textContent = "You are on the list. We will be in touch.";
         form.reset();
       })
       .catch(() => {
