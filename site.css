@@ -265,7 +265,12 @@ main,
   padding-bottom: 40px;
 }
 
+/* The claims are the demo's caption row, so they hang from it rather than
+   opening a section of their own. The explicit top also holds on narrow
+   screens, where the blanket section padding would otherwise push them a
+   chapter away again. */
 #claims {
+  padding-top: 0;
   padding-bottom: 40px;
 }
 
@@ -987,9 +992,9 @@ strong {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 44px;
-  margin-top: 48px;
-  /* Matches the measure the manifesto held here, so the join with the demo
-     below is unchanged by the swap. */
+  /* Close enough to the demo above to read as its takeaways, not the start
+     of something new. */
+  margin-top: 24px;
   margin-bottom: 40px;
 }
 
