@@ -564,11 +564,7 @@ strong {
  * part of the particles.
  */
 .hero {
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 148px 0 44px;
+  padding: 118px 0 30px;
 }
 
 /*
@@ -832,6 +828,7 @@ strong {
 .app-shot {
   display: grid;
   grid-template-rows: auto 1fr;
+  height: 660px;
   max-width: 880px;
   margin-inline: auto;
   border: 1px solid var(--border);
@@ -901,6 +898,7 @@ strong {
 .shot-cols {
   display: grid;
   grid-template-columns: 60px minmax(0, 1fr) auto;
+  min-height: 0;
 }
 
 .shot-rail {
@@ -975,13 +973,22 @@ strong {
   display: grid;
   grid-template-rows: 1fr auto;
   min-width: 0;
+  min-height: 0;
 }
 
 .shot-feed {
   display: grid;
   gap: 14px;
   align-content: start;
+  min-height: 0;
   padding: 16px 18px 8px;
+  overflow-y: auto;
+  /* The demo's scrollbar would only narrate the player's own staging. */
+  scrollbar-width: none;
+}
+
+.shot-feed::-webkit-scrollbar {
+  display: none;
 }
 
 /* The channel's past, standing in for messages that are not the story:
@@ -1452,7 +1459,14 @@ strong {
   display: grid;
   gap: 12px;
   align-content: start;
+  min-height: 0;
   padding: 12px 13px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.th-body::-webkit-scrollbar {
+  display: none;
 }
 
 /* The elbow out of the root's avatar gutter, the way the open thread draws
@@ -1541,12 +1555,21 @@ strong {
    narrower gutter, and the thread panel docks below the room the way a
    phone-width panel takes the screen for itself. */
 @media (max-width: 720px) {
+  .app-shot {
+    height: auto;
+  }
+
   .shot-cols {
     grid-template-columns: 52px minmax(0, 1fr);
   }
 
   .shot-feed {
+    max-height: 440px;
     padding: 14px 12px 8px;
+  }
+
+  .th-body {
+    max-height: 320px;
   }
 
   .shot-thread {
@@ -1572,32 +1595,8 @@ strong {
 
 /* ------------------------------------------------------------- cta band -- */
 
-.cta-band {
-  padding: 40px 0 148px;
-  text-align: center;
-}
 
-.cta-band .wrap {
-  display: grid;
-  gap: 22px;
-  justify-items: center;
-  padding: 76px 32px;
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  background:
-    radial-gradient(
-      70% 120% at 50% 0%,
-      color-mix(in srgb, var(--salmon) 12%, transparent) 0%,
-      transparent 70%
-    ),
-    color-mix(in srgb, var(--surface-1) 88%, transparent);
-  backdrop-filter: blur(14px);
-}
 
-.cta-band p {
-  color: var(--muted);
-  max-width: 52ch;
-}
 
 /* --------------------------------------------------------------- pricing -- */
 
@@ -1775,7 +1774,7 @@ strong {
   }
 
   .hero {
-    padding-top: 128px;
+    padding-top: 96px;
   }
 
   .cards,
@@ -1787,9 +1786,6 @@ strong {
     display: none;
   }
 
-  .cta-band .wrap {
-    padding: 56px 22px;
-  }
 
   .site-footer .legal {
     margin-left: 0;
