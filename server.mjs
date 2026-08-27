@@ -39,6 +39,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const ROUTES = new Map([
   ["/", ["index.html", "text/html; charset=utf-8"]],
   ["/pricing", ["pricing.html", "text/html; charset=utf-8"]],
+  ["/waitlist", ["waitlist.html", "text/html; charset=utf-8"]],
   ["/download", ["download.html", "text/html; charset=utf-8"]],
   ["/site.css", ["site.css", "text/css; charset=utf-8"]],
   ["/site.js", ["site.js", "text/javascript; charset=utf-8"]],
