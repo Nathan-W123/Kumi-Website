@@ -183,6 +183,15 @@ test("the front-page waitlist starts and finishes in place", () => {
   const script = read("site.js");
   assert.match(script, /fetch\(form\.action,/u);
   assert.match(script, /event\.preventDefault\(\)/u);
+  assert.doesNotMatch(
+    script,
+    /^import .*\.\/field\.js/mu,
+    "the waitlist must not wait for the optional WebGL module to load",
+  );
+  assert.ok(
+    script.indexOf('mark("waitlist")') < script.indexOf('import("./field.js")'),
+    "the waitlist must be wired before the optional WebGL module is loaded",
+  );
 
   const server = read("server.mjs");
   assert.match(server, /pathname === WAITLIST_PATH/u);

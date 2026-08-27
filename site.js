@@ -27,11 +27,9 @@
  * cannot be drawn costs the field and nothing else.
  */
 
-import { startField } from "./field.js";
-
 // Read by the boot script's ?why diagnostics: proof this module's graph
 // loaded, and which revision of it.
-window.__kumiSiteRev = "w12";
+window.__kumiSiteRev = "w13";
 
 // A breadcrumb per top-level step, printed by the ?why panel. On one phone
 // the module provably ran its first statement and provably reached none of
@@ -59,6 +57,23 @@ function note(phase, error) {
   window.__kumiErrors.push(
     phase + ": " + (error instanceof Error ? error.message : String(error)),
   );
+}
+
+/*
+ * Forms are useful before any of the visual layer is. Wire them before
+ * asking the browser about motion, mounting the showcase, or loading the
+ * WebGL module: a failure in any of those optional features must never turn
+ * a submit into a document navigation to an API response.
+ *
+ * The declarations live below with the rest of the form code and are
+ * hoisted here. The module itself is at the end of every document, so the
+ * forms have already been parsed by the time this runs.
+ */
+try {
+  waitlist();
+  mark("waitlist");
+} catch (error) {
+  note("waitlist", error);
 }
 
 // Belt on the very first API call: a WebView with a broken matchMedia gets
@@ -241,13 +256,6 @@ function wireWaitlist(form) {
   });
 }
 
-try {
-  waitlist();
-  mark("waitlist");
-} catch (error) {
-  note("waitlist", error);
-}
-
 mark("gate-call");
 try {
   gate();
@@ -382,25 +390,44 @@ function field() {
     window.__kumiFieldState = "no canvas in the page";
     return;
   }
-  try {
-    stopField = startField(canvas, { progress, shift });
-    if (stopField !== undefined) {
-      // Tells the stylesheet the real water is running, so the CSS-only
-      // swell that stands in for it on machines without WebGL steps aside.
-      document.documentElement.classList.add("field-live");
-      window.__kumiFieldState = "running";
-    } else {
-      window.__kumiFieldState = "webgl2 unavailable — CSS swell instead";
-    }
-  } catch (error) {
-    // A shader that would not compile, or a context lost on creation. The
-    // stylesheet's swell is already behind the canvas and is a complete,
-    // living background on its own — but the reason is kept for the ?why
-    // overlay, because a silent catch is how this stayed undiagnosable.
-    stopField = undefined;
-    window.__kumiFieldState =
-      "crashed: " + (error instanceof Error ? error.message : String(error));
-  }
+  window.__kumiFieldState = "loading";
+  import("./field.js")
+    .then(({ startField }) => {
+      // The preference can change while the module is in flight. Do not
+      // briefly start a continuous animation after the reader has disabled
+      // it; the CSS swell is already suppressed by the same preference.
+      if (reduceMotion.matches) {
+        window.__kumiFieldState = "disabled by reduced motion";
+        return;
+      }
+      try {
+        stopField = startField(canvas, { progress, shift });
+        if (stopField !== undefined) {
+          // Tells the stylesheet the real water is running, so the CSS-only
+          // swell that stands in for it on machines without WebGL steps aside.
+          document.documentElement.classList.add("field-live");
+          window.__kumiFieldState = "running";
+        } else {
+          window.__kumiFieldState = "webgl2 unavailable — CSS swell instead";
+        }
+      } catch (error) {
+        fieldFailed(error);
+      }
+    })
+    .catch((error) => {
+      fieldFailed(error);
+    });
+}
+
+function fieldFailed(error) {
+  // A module that would not parse, a shader that would not compile, or a
+  // context lost on creation. The stylesheet's swell is already behind the
+  // canvas and is a complete, living background on its own — but the reason
+  // is kept for the ?why overlay, because a silent catch is how this stayed
+  // undiagnosable.
+  stopField = undefined;
+  window.__kumiFieldState =
+    "crashed: " + (error instanceof Error ? error.message : String(error));
 }
 
 /* ------------------------------------------------------------- helpers -- */
