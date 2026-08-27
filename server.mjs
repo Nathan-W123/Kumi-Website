@@ -52,6 +52,7 @@ const ROUTES = new Map([
   ["/fonts/jetbrains-mono.woff2", ["fonts/jetbrains-mono.woff2", "font/woff2"]],
   ["/fonts/LICENSE.md", ["fonts/LICENSE.md", "text/plain; charset=utf-8"]],
   ["/kumi-logo.png", ["kumi-logo.png", "image/png"]],
+  ["/kumi-mark.png", ["kumi-mark.png", "image/png"]],
   // Under /vendor/ for the reason the gateway puts it there: it is a minified
   // UMD build, and the checks that hold every first-party module to ES-module
   // rules skip this prefix. The licence travels with it — MIT requires that.
