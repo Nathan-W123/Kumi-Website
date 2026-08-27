@@ -49,10 +49,11 @@
         <div class="wrap">
           <div class="prose">
             <h2>The short version</h2>
-            <p>Right now KUMI is a waitlist. If filling in that form is all
-              you have done, we hold the email address you typed and whichever
-              of the three optional answers you chose to fill in. We do not
-              forward it anywhere, and nothing on this site tracks you.</p>
+            <p>Right now KUMI is invitation-only, and the waitlist is the
+              way in. If filling in that form is all you have done, we hold
+              the email address you typed, your name and your note if you
+              filled them in, and the fact that you came from this site. We do
+              not forward it anywhere, and nothing on this site tracks you.</p>
 
             <p>If you have an account, KUMI holds your sign-in details,
               everything you and your agents write inside it, and a complete
@@ -104,26 +105,38 @@
               describe that as isolation, because it is not.</p>
 
             <h2>If you only joined the waitlist</h2>
-            <p>The form asks four things and requires one. We store the email
-              address, and the name, the agents you use and the free-text
-              note if you filled them in, plus the time the row was written.
-              The endpoint behind the form also accepts a company and a team
-              size, which the form itself no longer asks for; if something
-              sends them, they are stored too. One row per address: sending
-              the form twice does not create a second one.</p>
+            <p>The form asks three things and requires one. We store the
+              email address, lowercased; your name and your note if you filled
+              them in; a note of where the signup came from, which for this
+              form is always the word "website"; the time the row was written;
+              and, once somebody lets you through, the time that happened.
+              Nothing else — there is no password on this row and nothing here
+              you can sign in with.</p>
 
-            <p>Nothing is forwarded. No confirmation email is sent, because
-              there is no code in KUMI that emails a waitlisted person at
-              all — when invitations go out, a person will send them. Your IP
-              address is used to rate-limit the form to ten submissions a
-              minute and is held only in the running process's memory; it is
-              never written to the database and it is gone when the process
-              restarts.</p>
+            <p>One row per address, matched without regard to capitalisation:
+              filling the form again updates your name and your note and
+              leaves your place in the queue where it was. You get the same
+              answer either way. That is deliberate — a form anybody can find
+              that replied differently to an address it already knew would be
+              a way to ask us which addresses those are.</p>
 
-            <p>Being honest about the gap: there is no code that removes a
-              waitlist row, and no unsubscribe link. If you want off the
-              list, write to kumi.support@gmail.com and we will delete the
-              row by hand.</p>
+            <p>Nothing is forwarded. Joining sends you no email at all, so if
+              you are waiting to hear, nothing has gone missing. The one
+              message this ever sends is the invitation itself, when somebody
+              approves your row: it tells you that you are through and where
+              to create your account.</p>
+
+            <p>Your IP address is used to rate-limit the form to ten
+              submissions a minute and is held only in the running process's
+              memory; it is never written to the database and it is gone when
+              the process restarts.</p>
+
+            <p>Being honest about the gap: there is a way to delete a waitlist
+              row, but it is ours, not yours — an operator can remove one, and
+              there is no unsubscribe link and no way for you to do it
+              yourself. Write to kumi.support@gmail.com and we will remove it.
+              The same goes for seeing what your row holds: there is no page
+              that shows it to you, so ask and we will tell you.</p>
 
             <h2>Your account</h2>
             <p>An account holds your email address, which is also how you

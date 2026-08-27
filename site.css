@@ -763,6 +763,30 @@ strong {
   color: var(--salmon);
 }
 
+/* The one thing a form collecting an address owes the person filling it in:
+   what happens to it, said here rather than only on a page they would have
+   to think to visit. Set to the form's own measure so it reads as part of
+   it, and quieter than the fields so it does not compete with them. */
+.join-fine {
+  width: min(100%, 460px);
+  margin: 22px auto 0;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--faint);
+}
+
+.join-fine a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent);
+  text-underline-offset: 3px;
+}
+
+.join-fine a:hover {
+  color: var(--text);
+}
+
 .hero-aside {
   display: grid;
   gap: 22px;

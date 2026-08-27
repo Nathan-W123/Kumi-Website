@@ -53,20 +53,29 @@
     <main>
       <section class="section section-close">
         <div class="wrap">
-          <!-- A real form, posting on its own to the same origin. Four
-               questions, and only the address is required: every one of the
-               others is somebody deciding whether to keep typing. site.js
-               answers in place where it can; without JavaScript the server
-               answers with a page.
+          <!-- Three questions, and only the address is required: every one of
+               the others is somebody deciding whether to keep typing.
 
-               The route still accepts a company and a team size, and the
-               columns are still there — they are nullable, and leaving the
-               back end able to take a field the form has stopped asking for
-               costs nothing and saves a migration if it comes back. -->
-          <form class="join" method="post" action="/api/v1/waitlist">
+               The names are the deployment's, not ours. POST /api/v1/waitlist
+               reads `email`, `displayName`, `note` and `source` and silently
+               ignores anything else, so a field named to suit this page would
+               be typed by a person and then dropped on the floor. The lengths
+               are the server's caps too.
+
+               `source` is hidden and constant: an operator reading the list
+               wants to know which door somebody came through, and this is the
+               only door that sets it.
+
+               The action is absolute because the API is not here. This site
+               and the deployment are separate origins now, which the script
+               below has to survive. -->
+          <form class="join" method="post"
+            action="https://kumi.up.railway.app/api/v1/waitlist">
+            <input type="hidden" name="source" value="website">
+
             <div class="join-field">
               <label for="join-name">Your name</label>
-              <input id="join-name" name="name" type="text" autocomplete="name" maxlength="120">
+              <input id="join-name" name="displayName" type="text" autocomplete="name" maxlength="120">
             </div>
 
             <div class="join-field">
@@ -75,13 +84,9 @@
             </div>
 
             <div class="join-field">
-              <label for="join-agents">Which agents do you use today?</label>
-              <input id="join-agents" name="agents" type="text" maxlength="200" placeholder="Claude, Codex, Cursor...">
-            </div>
-
-            <div class="join-field">
               <label for="join-note">What would you point KUMI at first?</label>
-              <textarea id="join-note" name="note" rows="4" maxlength="1000"></textarea>
+              <textarea id="join-note" name="note" rows="4" maxlength="2000"
+                placeholder="The repository, the agents you already use, whatever is useful."></textarea>
             </div>
 
             <div class="join-send">
@@ -89,6 +94,11 @@
               <p class="join-say" role="status" aria-live="polite"></p>
             </div>
           </form>
+
+          <p class="join-fine">We keep your address and what you type here
+            until you ask us to remove it, and we do not pass it to anybody.
+            What we hold and how to have it deleted is set out in our <a
+            href="privacy">privacy policy</a>.</p>
         </div>
       </section>
     </main>
