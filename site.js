@@ -31,7 +31,7 @@ import { startField } from "./field.js";
 
 // Read by the boot script's ?why diagnostics: proof this module's graph
 // loaded, and which revision of it.
-window.__kumiSiteRev = "w11";
+window.__kumiSiteRev = "w12";
 
 // A breadcrumb per top-level step, printed by the ?why panel. On one phone
 // the module provably ran its first statement and provably reached none of
@@ -170,7 +170,7 @@ function disarm() {
  * line in this gate is allowed to be that line again.
  */
 /*
- * The waitlist form, wired whatever the motion gate decided.
+ * Every waitlist form, wired whatever the motion gate decided.
  *
  * Deliberately outside `wire()`. Everything in there is decoration and is
  * skipped when a reader asks for less motion; answering a form in place is
@@ -180,10 +180,14 @@ function disarm() {
  * that belongs behind that particular gate.
  */
 function waitlist() {
-  const form = document.querySelector(".join");
-  if (form === null) {
-    return;
+  for (const form of document.querySelectorAll(
+    '.join[action="/api/v1/waitlist"]',
+  )) {
+    wireWaitlist(form);
   }
+}
+
+function wireWaitlist(form) {
   const say = form.querySelector(".join-say");
   const button = form.querySelector("button");
   if (say === null || button === null) {

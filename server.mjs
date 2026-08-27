@@ -95,6 +95,71 @@ function send(response, status, type, body) {
   response.end(bytes);
 }
 
+const WAITLIST_PATH = "/api/v1/waitlist";
+const WAITLIST_BODY_LIMIT = 16 * 1024;
+
+async function readRequestBody(request) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > WAITLIST_BODY_LIMIT) {
+      throw new RangeError("waitlist request is too large");
+    }
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+/**
+ * Keep the marketing origin as the form's front door while the deployment
+ * remains the system that owns the waitlist. This also preserves the plain
+ * HTML response for a browser without JavaScript and the JSON response used
+ * by site.js to keep somebody on the page.
+ */
+async function proxyWaitlist(request, response) {
+  let body;
+  try {
+    body = await readRequestBody(request);
+  } catch (error) {
+    if (error instanceof RangeError) {
+      send(response, 413, "text/plain; charset=utf-8", "Request too large");
+      return;
+    }
+    send(response, 400, "text/plain; charset=utf-8", "Bad request");
+    return;
+  }
+
+  try {
+    const reply = await fetch(new URL(WAITLIST_PATH, APP_ORIGIN), {
+      method: "POST",
+      headers: {
+        "content-type": request.headers["content-type"] ?? "application/octet-stream",
+        accept: request.headers.accept ?? "text/html",
+      },
+      body,
+      redirect: "manual",
+    });
+    const bytes = Buffer.from(await reply.arrayBuffer());
+    send(
+      response,
+      reply.status,
+      reply.headers.get("content-type") ?? "application/octet-stream",
+      bytes,
+    );
+  } catch {
+    const json = request.headers.accept?.includes("application/json") === true;
+    send(
+      response,
+      502,
+      json ? "application/json; charset=utf-8" : "text/plain; charset=utf-8",
+      json
+        ? JSON.stringify({ error: "The waitlist service is unavailable." })
+        : "The waitlist service is unavailable. Please try again.",
+    );
+  }
+}
+
 /**
  * The address this request is really asking for.
  *
@@ -139,12 +204,22 @@ const NOT_FOUND = `<!doctype html>
 </div>
 `;
 
-const server = createServer((request, response) => {
+const server = createServer(async (request, response) => {
   let pathname;
   try {
     pathname = new URL(request.url ?? "/", `http://${host}:${port}`).pathname;
   } catch {
     send(response, 400, "text/plain; charset=utf-8", "Bad request");
+    return;
+  }
+
+  if (pathname === WAITLIST_PATH) {
+    if (request.method !== "POST") {
+      response.setHeader("Allow", "POST");
+      send(response, 405, "text/plain; charset=utf-8", "Method not allowed");
+      return;
+    }
+    await proxyWaitlist(request, response);
     return;
   }
 

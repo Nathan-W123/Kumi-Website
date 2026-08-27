@@ -167,6 +167,28 @@ test("the front page is the marketing page", () => {
   assert.match(read("index.html"), /coordination layer/iu);
 });
 
+test("the front-page waitlist starts and finishes in place", () => {
+  const page = read("index.html");
+  const hero = page.slice(
+    page.indexOf('<header class="hero">'),
+    page.indexOf("</header>"),
+  );
+
+  assert.doesNotMatch(hero, /Why KUMI\?/u);
+  assert.doesNotMatch(hero, /href="waitlist"/u);
+  assert.match(hero, /<form[\s\S]*action="\/api\/v1\/waitlist"/u);
+  assert.match(hero, /<input[\s\S]*name="email"[\s\S]*type="email"[\s\S]*required/u);
+  assert.match(hero, /<button[^>]*type="submit">Join the waitlist<\/button>/u);
+
+  const script = read("site.js");
+  assert.match(script, /fetch\(form\.action,/u);
+  assert.match(script, /event\.preventDefault\(\)/u);
+
+  const server = read("server.mjs");
+  assert.match(server, /pathname === WAITLIST_PATH/u);
+  assert.match(server, /new URL\(WAITLIST_PATH, APP_ORIGIN\)/u);
+});
+
 test("no marketing address is cached beyond the checkout that served it", () => {
   /*
    * The monorepo's version of this asserted that no marketing key was marked
