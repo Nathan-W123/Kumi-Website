@@ -22,7 +22,7 @@
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -36,13 +36,15 @@ const here = path.dirname(fileURLToPath(import.meta.url));
  * answer production would give — a mirror that is more permissive than the
  * thing it mirrors teaches the wrong lesson.
  */
-const ROUTES = new Map([
+export const ROUTES = new Map([
   ["/", ["index.html", "text/html; charset=utf-8"]],
   ["/pricing", ["pricing.html", "text/html; charset=utf-8"]],
   ["/waitlist", ["waitlist.html", "text/html; charset=utf-8"]],
   ["/about", ["about.html", "text/html; charset=utf-8"]],
   ["/faq", ["faq.html", "text/html; charset=utf-8"]],
   ["/security", ["security.html", "text/html; charset=utf-8"]],
+  ["/privacy", ["privacy.html", "text/html; charset=utf-8"]],
+  ["/terms", ["terms.html", "text/html; charset=utf-8"]],
   ["/download", ["download.html", "text/html; charset=utf-8"]],
   ["/site.css", ["site.css", "text/css; charset=utf-8"]],
   ["/site.js", ["site.js", "text/javascript; charset=utf-8"]],
@@ -178,7 +180,17 @@ const server = createServer((request, response) => {
     });
 });
 
-server.listen(port, host, () => {
-  process.stdout.write(`Kumi marketing site on http://${host}:${String(port)}\n`);
-  process.stdout.write(`  /app redirects to ${APP_ORIGIN}\n`);
-});
+/*
+ * Only listen when this file is what was run.
+ *
+ * `site.test.mjs` imports `ROUTES` so the guards check the table production
+ * routes from rather than a copy of it that could drift; importing a module
+ * that binds a port as a side effect would make the suite fail on any machine
+ * already using 4173, and fail confusingly.
+ */
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+  server.listen(port, host, () => {
+    process.stdout.write(`Kumi marketing site on http://${host}:${String(port)}\n`);
+    process.stdout.write(`  /app redirects to ${APP_ORIGIN}\n`);
+  });
+}

@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#121110">
+    <meta name="description" content="What KUMI collects, where it is hosted, who else receives it, how long it is kept, and how to ask for a copy, a correction or a deletion.">
+    <link rel="icon" href="kumi-mark.png">
+    <script src="site-boot.js"></script>
+    <link rel="stylesheet" href="site.css">
+    <link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+    <title>KUMI — privacy</title>
+  </head>
+  <body>
+    <!-- No canvas: the water carries the front page's argument, and a page of
+         prose is a place to read. The stylesheet's gradient is the ground. -->
+    <div class="field" aria-hidden="true"></div>
+    <div class="field-veil" aria-hidden="true"></div>
+
+    <nav class="site-nav">
+      <div class="wrap">
+        <a class="nav-brand" href=".">
+          <img src="kumi-mark.png" alt="KUMI" width="26" height="26">
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="about">About</a>
+          <a class="nav-link" href="faq">FAQ</a>
+          <a class="nav-link" href="security">Security</a>
+        </div>
+        <div class="nav-end">
+          <a class="nav-link" href="/app#signin">Sign in</a>
+          <a class="btn btn-primary btn-small" href="waitlist">Join the waitlist</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero hero-short">
+      <div class="wrap hero-lede">
+        <h1>
+          <span class="w"><span>Privacy.</span></span>
+        </h1>
+        <p class="hero-tag">What KUMI holds, where it lives, who else sees it, and what you can ask us to do about it.</p>
+        <p class="hero-note">Last updated 27 August 2026</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="section section-close">
+        <div class="wrap">
+          <div class="prose">
+            <h2>The short version</h2>
+            <p>Right now KUMI is a waitlist. If filling in that form is all
+              you have done, we hold the email address you typed and whichever
+              of the three optional answers you chose to fill in. We do not
+              forward it anywhere, and nothing on this site tracks you.</p>
+
+            <p>If you have an account, KUMI holds your sign-in details,
+              everything you and your agents write inside it, and a complete
+              copy of every repository you connect. All of it sits on one
+              deployment we run on Railway and the database that deployment
+              connects to, also on Railway. It is not on your machine and it
+              is not in your own cloud, and we would rather say that plainly
+              than let you assume otherwise.</p>
+
+            <p>When an agent runs, the parts of your code it reads and the
+              instructions you gave it are sent to the model provider whose
+              account you connected. What that provider does with them is
+              governed by your agreement with that provider, not by this
+              page.</p>
+
+            <p>We use no analytics, no advertising trackers and no
+              third-party scripts. These marketing pages set no cookies at
+              all. The app sets two, and both exist to keep you signed in.
+              KUMI ships no telemetry of its own, but the vendor coding tool
+              you connect may send its own telemetry to its own vendor, and
+              this page says where.</p>
+
+            <p>You can ask for a copy of what we hold, a correction, or a
+              deletion, by writing to kumi.support@gmail.com. Several of
+              those we have to carry out by hand, and this page says exactly
+              where. This page applies whether you use KUMI as an individual
+              or on behalf of a company.</p>
+
+            <h2>Who is responsible for this</h2>
+            <p>KUMI decides what is collected and why, and is the controller
+              of the personal data described here. It is a pre-launch product
+              built by one person rather than an organisation with a privacy
+              department, and the honest consequence runs through this whole
+              page: most of what follows is done by a human answering an
+              email, not by a button in the product. The address for all of
+              it is kumi.support@gmail.com.</p>
+
+            <h2>Where KUMI runs</h2>
+            <p>There is one deployment, hosted on Railway. The bare clone of
+              every repository anyone has connected, the working checkouts
+              agents and people edit in, and any images posted into a channel
+              sit on that deployment's own storage volume; the database is the
+              managed Postgres it connects to, also on Railway. Your
+              repository is a directory on that deployment's storage,
+              alongside everyone else's, and one database holds every
+              organisation's rows. Separation between customers is enforced
+              in software, by roles and per-repository grants, not by
+              separate machines or separate databases. We are not going to
+              describe that as isolation, because it is not.</p>
+
+            <h2>If you only joined the waitlist</h2>
+            <p>The form asks four things and requires one. We store the email
+              address, and the name, the agents you use and the free-text
+              note if you filled them in, plus the time the row was written.
+              The endpoint behind the form also accepts a company and a team
+              size, which the form itself no longer asks for; if something
+              sends them, they are stored too. One row per address: sending
+              the form twice does not create a second one.</p>
+
+            <p>Nothing is forwarded. No confirmation email is sent, because
+              there is no code in KUMI that emails a waitlisted person at
+              all — when invitations go out, a person will send them. Your IP
+              address is used to rate-limit the form to ten submissions a
+              minute and is held only in the running process's memory; it is
+              never written to the database and it is gone when the process
+              restarts.</p>
+
+            <p>Being honest about the gap: there is no code that removes a
+              waitlist row, and no unsubscribe link. If you want off the
+              list, write to kumi.support@gmail.com and we will delete the
+              row by hand.</p>
+
+            <h2>Your account</h2>
+            <p>An account holds your email address, which is also how you
+              sign in and is unique regardless of capitalisation; the display
+              name your colleagues see; your password as a scrypt hash, never
+              as text we could read; whether the account is disabled or is an
+              administrator; when it was created; and the two accent colours
+              and agent colour you pick. Those colours are deliberately
+              visible to your colleagues, so people can tell whose agents are
+              whose.</p>
+
+            <p>There is no profile photo on our servers. The product has no
+              field for one. If you choose a picture, the browser keeps it
+              locally and never uploads it; everywhere else, your initials
+              stand in.</p>
+
+            <h2>Signing in, and what that records</h2>
+            <p>Each browser session stores a hashed session secret, a hashed
+              CSRF token, when it was created, when it expires, when it was
+              last seen, your IP address, and the first 512 characters of
+              your browser's user-agent string. Sessions last twelve hours
+              and do not extend themselves. Signing out deletes the row.</p>
+
+            <p>A session you never sign out of is a different story. The code
+              that would sweep expired sessions exists but nothing calls it,
+              so the IP address and user-agent on an expired session stay in
+              the database until we remove them by hand. We would rather
+              write that down than claim a retention limit we do not
+              enforce.</p>
+
+            <p>API tokens store the name you gave them, a hash of the secret,
+              their scopes, and the IP address and time they were last used.
+              Revoking one marks it revoked and keeps the row on purpose, so
+              the record that the credential existed survives. Those rows are
+              not swept either.</p>
+
+            <p>Failed sign-ins are counted in memory against the address that
+              was typed; ten failures lock that address for fifteen minutes,
+              and the count is cleared by a successful sign-in or a restart.
+              Password-reset records hold the address and a hashed token, and
+              are deleted when the reset is used or another is requested.
+              Invitation records hold the invited person's email address,
+              the role offered and who invited them; revoking an invitation
+              stamps it as revoked rather than deleting it, so an address
+              invited once stays until we remove it by hand, including for
+              someone who never accepted.</p>
+
+            <h2>What you and your team write</h2>
+            <p>KUMI stores channel messages and their replies, reactions,
+              direct messages between two people including whether and when
+              they were read, review comments on a changeset, approval
+              decisions and the comments left with them, the objective you
+              typed when you asked for work, and the transcript of the thread
+              that request was made inside, which is copied onto the task as
+              context. Pins and deletions record who did them.</p>
+
+            <p>You can delete your own reply or your own direct message. A
+              channel message that already has replies is blanked in place
+              and keeps a record of who deleted it, so the thread still makes
+              sense. Deleting a repository removes its whole channel. There
+              is nothing in the product that removes everything one person
+              has written across a whole account.</p>
+
+            <h2>Your repositories</h2>
+            <p>Connecting a repository takes a full bare clone of it — every
+              file, every branch, the entire history — onto the deployment.
+              From that, KUMI creates working checkouts: one per running
+              task, one per integration attempt, one per planning session, a
+              long-lived one per person for editing in the browser, and one
+              that runs a preview of your app. The database additionally
+              holds the diff of every file an agent changed, stored verbatim
+              as the patch text itself, along with the agent's explanation,
+              the commands it ran, the test results, and the symbols and
+              dependencies it touched. Your source code is therefore in the
+              database as well as on the disk.</p>
+
+            <p>Deleting a repository deletes the clone from disk and cascades
+              across most of its rows. Two things it does not reach: the
+              per-person editing checkouts, and any images posted into that
+              repository's channel. Working copies of code can therefore
+              outlive the repository they came from until we remove them by
+              hand.</p>
+
+            <h2>Images posted into a channel</h2>
+            <p>Images are stored as files on the deployment's own storage
+              volume, alongside your repositories, up to eight megabytes
+              each. There is no code that deletes one. Deleting the message
+              that showed an image does not remove the file. Screenshots tend to contain whatever was on the screen at
+              the time, so this is worth knowing before you paste one.</p>
+
+            <h2>What is kept from an agent run</h2>
+            <p>Not the raw exchange with the model. KUMI itself writes no
+              transcript of it: the vendor tool's streamed output is held in
+              memory while the run happens and is discarded when the process
+              ends, and the temporary home the tool signs in from — including
+              any session file the tool wrote there — is deleted at the end of
+              the run. There is one exception, for Codex, described next.
+              What is kept is the agent's own narration, posted into the
+              channel and recorded in the audit log; its plan; its
+              explanation of what it changed; and token counts.</p>
+
+            <p>That exception, stated because we would rather you read it
+              here than find it. For Codex specifically, KUMI reads the last 64
+              kilobytes of the newest Codex session file before deleting that
+              temporary home, in order to recover rate-limit figures, and
+              writes that fragment to a plain unencrypted file — one per
+              person. What is stored is the raw tail of that session file,
+              not just the figures. It is overwritten by the next Codex run
+              and nothing else deletes it. This should store only the numbers
+              it is actually after, and it is on the list to fix.</p>
+
+            <h2>The audit log</h2>
+            <p>KUMI keeps an append-only, hash-chained record of what
+              happened: who signed in, who was invited or removed, who issued
+              or revoked a token, who submitted or cancelled a task, who
+              approved what, and which messages were posted, edited or
+              deleted. It stores internal user ids rather than names, and it
+              does not store the text of channel messages — only the
+              message's id. It does store the email address of anyone invited
+              to an organisation, the objective you typed when submitting a
+              task in full, the comment left with an approval decision, and
+              the agent's own narration of a run.</p>
+
+            <p>Anyone with view access to a project can read that project's
+              audit timeline: who ran what, task objectives in full, and
+              approval comments. Invitation records, which carry the invited
+              email address, are written to the same log but are scoped to
+              the organisation and are not returned by the project
+              timeline.</p>
+
+            <p>The log is built to resist being edited, and that cuts against
+              you as well as for you. Database triggers refuse every update
+              outright, and refuse a deletion unless an operator checkpoint
+              already covers the rows. That is the property that makes the
+              log worth having, and it is also why we cannot simply wipe this
+              one store when you ask us to. The retention section below says
+              what that means for you.</p>
+
+            <h2>Server logs</h2>
+            <p>There is no HTTP access log: no request line, path, IP address
+              or user-agent is written per request. What does reach the
+              deployment's log is operational diagnostics carrying internal
+              identifiers, an account email address if a trial-ending notice
+              fails to send, a user id if a password-reset message fails to
+              send, and the first eighty characters of a channel message that
+              no agent picked up.</p>
+
+            <p>One more, stated because it matters: a deployment with no mail
+              relay configured writes the whole outgoing message into its own
+              log instead of sending it, and password-reset messages contain
+              a working reset link. Logs go to the hosting platform's log
+              system. The product sets no rotation and no retention period,
+              so how long they are held is Railway's setting rather than
+              ours.</p>
+
+            <h2>Billing</h2>
+            <p>KUMI is not generally available and tiered billing is being
+              reworked. Where a paid sign-up or an upgrade does run, your
+              email address and an internal organisation identifier are sent
+              to Stripe, and we store the Stripe customer and subscription
+              ids, the subscription status, the trial end and the period end.
+              Card details are handled by Stripe's own hosted checkout and
+              never reach KUMI — there is no field for a card anywhere in our
+              database. On a deployment with no Stripe key configured,
+              nothing reaches Stripe at all.</p>
+
+            <h2>Why we hold it, and on what basis</h2>
+            <p>To provide the product you asked for: performance of our
+              contract with you. That covers your account, the content you
+              and your team create, the repositories you connect, and the
+              agent runs you start.</p>
+
+            <p>To keep the product secure and working: our legitimate
+              interests. That covers the IP address and user-agent on a
+              session, the last-used IP on an API token, rate limiting, and
+              the audit log. We think a small team needs to be able to see
+              who did what to a shared codebase, and that this outweighs the
+              modest intrusion of recording it. If you disagree in your own
+              case, you can object — see the rights section.</p>
+
+            <p>Because you asked to hear from us: consent, for the waitlist.
+              You can withdraw it at any time by writing to us.</p>
+
+            <p>To take payment and keep the records that go with it: contract
+              and, for records we are required to retain, legal
+              obligation.</p>
+
+            <p>We do not use your content, your messages or your repositories
+              to train a model of our own. KUMI has no model of its own.
+              Two small models do run locally inside the deployment, to
+              filter channel chatter and to write short summaries; they are
+              fixed, they do not learn from what they read, and nothing they
+              read leaves the process.</p>
+
+            <h2>Model providers, and why this is the important one</h2>
+            <p>KUMI never calls a model API itself. It runs the vendor's own
+              command-line tool on the deployment, with a checkout of your
+              repository beside it, and that tool sends what it reads to its
+              own vendor. So the contents of the files the agent opens, the
+              diffs it produces, the objective you typed and the surrounding
+              thread messages go to the provider you connected. The product
+              can connect Anthropic (Claude Code), OpenAI (Codex), Cursor and
+              Amazon (Kiro) today; support for Google and GitHub Copilot
+              exists in the code but is not offered. Which one receives your
+              code depends entirely on which account you connected.</p>
+
+            <p>Because it is your account, that provider's terms and your own
+              plan with them decide how long they keep it and whether any of
+              it is used to improve their models. We cannot see that, we
+              cannot change it, and we cannot delete anything on your behalf.
+              If it matters — and for source code it usually does — read the
+              terms of the account before you connect it.</p>
+
+            <p>One related thing, so that "no telemetry" is not overstated
+              anywhere on this site: the vendor tool you connect may send its
+              own telemetry to its own vendor. KUMI's network allowlist for
+              the Claude Code tool deliberately permits Anthropic's telemetry
+              endpoint, which is a host that tool reaches on its own. That is
+              the tool's telemetry, not ours. KUMI ships none of its own and
+              sends nothing to it.</p>
+
+            <h2>Who else receives data</h2>
+            <p>Railway hosts the deployment. Everything described on this
+              page — the database, your repositories, the working checkouts,
+              the images, the logs — sits on infrastructure Railway
+              operates.</p>
+
+            <p>Stripe receives your email address and an internal
+              organisation identifier when a checkout runs, and handles card
+              details directly. Nothing reaches Stripe on a deployment with
+              no Stripe key configured.</p>
+
+            <p>GitHub receives what you ask it to. If you connect an account,
+              KUMI obtains a token on your behalf through GitHub's device
+              flow, reads your GitHub login name back so it can be displayed,
+              clones the repositories you choose over HTTPS, and pushes
+              completed work back only when you ask for it.</p>
+
+            <p>The model providers receive your code and your prompts, as
+              described above.</p>
+
+            <p>An email relay receives the recipient's address and the body
+              of the messages KUMI sends. There are three today: a sign-up
+              link, a password reset, and a notice that a trial is ending. A
+              fourth, an account confirmation code, is in the code and is off
+              unless the deployment turns it on. Which relay is a setting on
+              the deployment rather than something the product names, so we
+              are not naming one here that might be wrong. Ask and we will
+              tell you which one this deployment uses.</p>
+
+            <p>Hugging Face is listed for completeness. Two small models come
+              from it. The one that filters channel chatter is downloaded
+              when the container is built. The summariser is not: it is
+              downloaded the first time this deployment needs it, so Hugging
+              Face sees a download request from our server and nothing else.
+              No data about you or your code is ever sent to it.</p>
+
+            <p>We do not sell your personal information and we do not share
+              it for advertising.</p>
+
+            <p>The agreement this page sits under is set out in our <a
+              href="terms">terms of service</a>.</p>
+
+            <h2>How long we keep it</h2>
+            <p>Our rule is thirty days after you ask us to delete your
+              account, or after we terminate it, and then it is purged.</p>
+
+            <p>Now the honest part. There is no account-deletion feature in
+              the product today. No route, no button, and no code anywhere
+              that removes a user record or an organisation. The strongest
+              thing an administrator can do is disable an account, which
+              blocks
+              sign-in and revokes live sessions and leaves everything else in
+              place. So when you ask us to delete, we do it by hand against
+              the database, on that same thirty-day rule. We are telling you
+              this because a policy that describes a purge the software does
+              not perform is worth nothing.</p>
+
+            <p>Several things do not age out at all today, and you should
+              know which: expired sessions with their IP address and
+              user-agent; revoked and expired API tokens with their last-used
+              IP; invitation records holding an invited address; waitlist
+              rows; registered worker records; token-usage accounting;
+              images posted into channels; and the per-person editing
+              checkouts of a repository. For sessions and API tokens the
+              sweep code is written but nothing calls it, so those rows are
+              simply never removed. Nothing in the product removes any of
+              this on a schedule. Removing it is a manual job a person does,
+              on request or when we clean up.</p>
+
+            <p>The audit log is the hardest case, and the one place where we
+              will not promise complete erasure. It is deliberately built so
+              that individual entries cannot be removed or altered without
+              the whole record showing it. The database itself refuses: one
+              trigger rejects any update, another rejects any deletion the
+              operator has not first checkpointed. What we can do is retire a
+              whole segment of it once an operator checkpoint covers that
+              segment, and that is what we do when we purge an account. Until
+              then, what remains is your internal user id, the record of
+              actions taken, task objectives, approval comments, the agent's
+              narration of a run, and the email address of anyone
+              invited.</p>
+
+            <p>Stripe keeps its own billing records under its own retention
+              rules. KUMI has no way to delete a customer at Stripe, so a
+              purge here does not reach them.</p>
+
+            <h2>Your rights</h2>
+            <p>You can ask for a copy of the personal data we hold about you,
+              ask us to correct it, ask us to delete it, ask for it in a
+              portable form, object to our processing it on the basis of our
+              legitimate interests, ask us to restrict processing while a
+              question is open, and withdraw consent for the waitlist.</p>
+
+            <p>Write to kumi.support@gmail.com from the address on your
+              account, or from the address you gave the waitlist. We aim to
+              answer within thirty days and will tell you if we need longer
+              and why.</p>
+
+            <p>There is no export button and no delete button in the product.
+              Putting together everything held about one person means
+              querying more than twenty tables and several places on the
+              deployment's disk — your repository clones, the working
+              checkouts, your editing overlay, the images, and the credential
+              store — by hand. We would rather describe that plainly than
+              imply a self-serve process that does
+              not exist. If you are in the UK or the EU and think we have
+              handled this badly, you can also complain to your local data
+              protection authority.</p>
+
+            <h2>If you are in California</h2>
+            <p>The categories of personal information KUMI collects are:
+              identifiers, meaning your name, email address, IP address and
+              internal account id; commercial information, meaning
+              subscription status where billing runs; internet and network
+              activity, meaning session records, read markers and last-seen
+              timestamps; professional information, meaning the company, team
+              size and agents you may have told us about; and the content you
+              give us, meaning your messages, your task descriptions, your
+              repositories, and the diffs your agents produce from them.</p>
+
+            <p>We hold two kinds of sensitive personal information. The first
+              is your sign-in credentials — your email address together with
+              the hash of your password. The second, if you connect one, is
+              the credential for another account: the token or key your
+              coding agent signs in with, and a GitHub token. Both are held
+              to authenticate, and the connected credentials are stored
+              encrypted and are never returned to a browser. We never use
+              either, or any other sensitive personal information, to infer
+              characteristics about you, so there is nothing for a request to
+              limit their use to act on.</p>
+
+            <p>We collect this from you, from your browser, and from the
+              agent runs you start. We use it for the purposes set out above.
+              We disclose it to the service providers named above for those
+              purposes. We have not sold personal information and we have not
+              shared it for cross-context behavioural advertising in the
+              preceding twelve months, and we do not intend to start.</p>
+
+            <p>California residents have the right to know what is collected
+              and disclosed, to delete it, to correct it, to opt out of its
+              sale or sharing, to limit the use of sensitive personal
+              information, and not to be treated worse for exercising any of
+              those. Exercise any of them by writing to
+              kumi.support@gmail.com. An authorised agent may make a request
+              on your behalf, and we will ask for proof that you authorised
+              them.</p>
+
+            <p>Being straight about whether this applies: the CCPA and CPRA
+              bind businesses that meet at least one of three thresholds —
+              annual gross revenue above twenty-five million dollars, handling
+              the personal information of a hundred thousand or more
+              California consumers or households, or drawing half or more of
+              revenue from selling or sharing personal information. KUMI
+              meets none of them, and will not for a long time. We are
+              setting these rights out anyway, because we would rather work
+              this way from the start than switch it on the day we have
+              to.</p>
+
+            <h2>International transfers</h2>
+            <p>KUMI runs on one Railway deployment. Stripe, GitHub and the
+              model providers are United States companies, so using KUMI
+              means your personal data reaches the United States. The
+              deployment's own region is a setting rather than something
+              published here — ask us and we will tell you where it is.</p>
+
+            <p>We are not going to claim a specific transfer mechanism on
+              this page that we cannot show you. If having one in place is a
+              condition of you using KUMI, write to kumi.support@gmail.com
+              before you sign up and we will tell you honestly where it
+              stands.</p>
+
+            <h2>Children</h2>
+            <p>KUMI is a tool for professional software teams and is not
+              directed at children. There is no age field anywhere in the
+              product and nothing checks one, so we are relying on you here.
+              We do not knowingly collect personal information from anyone
+              under sixteen. If you believe a child has given us information,
+              write to kumi.support@gmail.com and we will remove it.</p>
+
+            <h2>Cookies</h2>
+            <p>The app sets two cookies, both at the moment a session begins
+              — when you sign in, finish signing up, accept an invitation, or
+              complete a password reset — both scoped to the whole site, both
+              marked SameSite=Strict, and both expiring with the twelve-hour
+              session. One holds the reference
+              to your session and is not readable by scripts. The other holds
+              a token the page reads and echoes back, which is how KUMI knows
+              a request came from a page you were actually on. Signing out
+              clears both.</p>
+
+            <p>That is every cookie the product sets. There is no analytics
+              cookie, no advertising cookie, and no third-party cookie. These
+              marketing pages set none at all, which is why there is no
+              consent banner on them: there is nothing to consent to.</p>
+
+            <h2>What your browser keeps by itself</h2>
+            <p>The dashboard remembers some things locally, in your browser,
+              which are never uploaded to us: a profile picture if you chose
+              one, a picture per channel, unsent message drafts, which
+              notifications you have read and how far, your last
+              organisation, project, repository and agent, your favourites
+              and muted channels, remembered image sizes, and appearance
+              settings such as theme, accent colour, layout and panel widths,
+              diff mode and whether message sounds are on.</p>
+
+            <p>Signing out does not clear any of it. It is cleared only when
+              a different account signs in on the same browser, and even then
+              several things are deliberately kept, because they describe the
+              browser rather than the person: your channel pictures,
+              remembered image sizes, and the appearance settings — theme,
+              accent colour, layout and panel widths, diff mode, and whether
+              message sounds are on. On a shared or borrowed machine, clear
+              the site's data yourself. Nothing we do on our
+              side can reach into your browser, so deleting your account does
+              not touch this.</p>
+
+            <p>The desktop app stores the server address and your access
+              token in a file in your operating system's user-data
+              directory, with the token sealed by the operating system's own
+              keystore. Signing out removes the token from that file.</p>
+
+            <h2>No analytics, no advertising</h2>
+            <p>KUMI ships no analytics package, no tag manager, no tracking
+              pixel, no session recorder, no error-reporting service and no
+              advertising code, in the product or on this site. Every font,
+              script and image on the page you are reading is served from
+              this origin: no Google Fonts, no CDN, no embeds. The pages
+              carry a Content-Security-Policy that allows scripts only from
+              this origin, so a third-party tracker could not run here even
+              if one were added by mistake.</p>
+
+            <p>The one qualification is the one made above: the vendor coding
+              tool you connect may send its own telemetry to its own vendor,
+              and KUMI's network allowlist for Claude Code deliberately
+              permits Anthropic's telemetry endpoint. That traffic is the
+              tool's, not ours. KUMI ships none of its own.</p>
+
+            <h2>How this is protected, and what we do not claim</h2>
+            <p>Passwords are stored as scrypt hashes. Session secrets, CSRF
+              tokens, API tokens, reset tokens and invitation secrets are
+              stored only as SHA-256 digests, so the values themselves are
+              not in the database. The credentials you connect for a coding
+              agent, and a GitHub token if you connect one, are encrypted
+              with AES-256-GCM on the deployment. Access is controlled by
+              organisation roles and per-repository grants. The audit log is
+              hash-chained. Sign-in and the waitlist are rate limited.</p>
+
+            <p>What we are not claiming: KUMI holds no SOC 2 report, no ISO
+              27001 certification and nothing HIPAA-related, and it has not
+              been through an external security audit. Repositories, working
+              checkouts, images and the database itself are stored plainly —
+              any encryption at rest is a property of the hosting platform,
+              not something the product does. Agent commands can be run
+              inside a Docker sandbox with a restricted network, and that
+              sandbox is optional rather than on by default. If any of this
+              needs to be otherwise before you could use KUMI, ask us and we
+              will tell you where it actually stands.</p>
+
+            <h2>Changes to this policy</h2>
+            <p>This page will change as the product does, and the date at the
+              top is the record of when it last did. Where a change
+              materially reduces the protection you have, we will say so here
+              and, if you have an account, write to you at the address on
+              it.</p>
+
+            <h2>Governing law</h2>
+            <p>This policy is governed by the laws of the State of
+              California, and the courts of California are the venue for any
+              dispute about it.</p>
+
+            <h2>Contact</h2>
+            <p>Everything on this page — a copy of your data, a correction, a
+              deletion, an export, an objection, coming off the waitlist,
+              which mail provider this deployment uses, which region it runs
+              in — goes to kumi.support@gmail.com. One person reads it.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span class="tagline">KUMI — the coordination layer between your
+          agents and your codebase.</span>
+        <a href="about">About</a>
+        <a href="faq">FAQ</a>
+        <a href="security">Security</a>
+        <a href="privacy">Privacy</a>
+        <a href="terms">Terms</a>
+        <span class="legal">© 2026 KUMI.</span>
+      </div>
+    </footer>
+
+    <script src="vendor/motion/motion.js"></script>
+    <script type="module" src="site.js"></script>
+  </body>
+</html>
