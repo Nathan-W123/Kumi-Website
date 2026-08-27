@@ -37,6 +37,7 @@ import {
   APP_ORIGIN,
   ROUTES,
   waitlistFailurePage,
+  waitlistSuccessPage,
   waitlistUpstreamHeaders,
 } from "./server.mjs";
 
@@ -181,7 +182,13 @@ test("the front-page waitlist starts and finishes in place", () => {
 
   assert.doesNotMatch(hero, /Why KUMI\?/u);
   assert.doesNotMatch(hero, /href="waitlist"/u);
-  assert.match(hero, /<form[\s\S]*action="\/api\/v1\/waitlist"/u);
+  // Relative, like every other reference in these pages. Root-absolute, the
+  // post escapes the preview proxy's path prefix and lands on the
+  // deployment's own /api/v1/waitlist — which has never heard of the
+  // preview and answers a phone with a page of origin_rejected JSON. The
+  // proxy in server.mjs only helps if the post actually reaches it.
+  assert.match(hero, /<form[\s\S]*action="api\/v1\/waitlist"/u);
+  assert.doesNotMatch(hero, /action="\/api\/v1\/waitlist"/u);
   assert.match(hero, /<input[\s\S]*name="email"[\s\S]*type="email"[\s\S]*required/u);
   assert.match(hero, /<button[^>]*type="submit">Join the waitlist<\/button>/u);
 
@@ -264,6 +271,27 @@ test("a navigated waitlist refusal is a page, not a screenful of JSON", () => {
 
   // A body that is not JSON at all still comes out as a legible page.
   assert.match(waitlistFailurePage(Buffer.from("upstream fell over")), /<!doctype html>/u);
+});
+
+test("a navigated waitlist acceptance is a page too", () => {
+  /*
+   * The gateway answers yes in JSON as well, so the submit that finally
+   * worked would have filled the same phone's screen with {"added":true} —
+   * indistinguishable, to anyone not reading the braces, from the bug they
+   * reported three times. Success gets the same translation as refusal.
+   */
+  const first = waitlistSuccessPage(Buffer.from(JSON.stringify({ added: true })));
+  assert.match(first, /<!doctype html>/u);
+  assert.match(first, /You are on the list\./u);
+  assert.match(first, /href="\/"/u, "the way back to the site");
+
+  // The endpoint says added:false for an address it already holds, and the
+  // page says the same thing site.js says in place: no error, no drama.
+  const again = waitlistSuccessPage(Buffer.from(JSON.stringify({ added: false })));
+  assert.match(again, /You are already on the list\./u);
+
+  // An acceptance whose body cannot be read is still an acceptance.
+  assert.match(waitlistSuccessPage(Buffer.from("ok")), /You are on the list\./u);
 });
 
 test("no marketing address is cached beyond the checkout that served it", () => {
@@ -845,9 +873,14 @@ test("the pages survive being served under a path prefix", () => {
    * written by copying one of these, and the thing most easily "tidied" in the
    * copy is exactly the leading slash that is missing on purpose.
    */
+  // `action` scanned alongside `href` and `src` since the day a
+  // root-absolute form action slipped past this test: under the preview
+  // prefix the waitlist posted to the deployment's own API instead of the
+  // preview's proxy, and three phones in a row photographed the JSON it
+  // answered with.
   for (const { file } of pages()) {
     const html = read(file);
-    const absolute = [...html.matchAll(/(?:href|src)="(\/[^"]*)"/gu)]
+    const absolute = [...html.matchAll(/(?:href|src|action)="(\/[^"]*)"/gu)]
       .map((match) => match[1])
       .filter((target) => !target.startsWith("/app"));
     assert.deepEqual(
@@ -857,6 +890,28 @@ test("the pages survive being served under a path prefix", () => {
         `page's own directory: ${absolute.join(", ")}`,
     );
   }
+});
+
+test("every form action still resolves to the address the server proxies", () => {
+  /*
+   * The other half of the relative-action rule. Relative keeps a post inside
+   * the preview prefix, but it is only correct because every page carrying a
+   * form sits at the origin root, where "api/v1/waitlist" resolves to
+   * "/api/v1/waitlist" — the one path server.mjs forwards to the gateway. A
+   * form copied onto a page served at another depth would resolve somewhere
+   * nothing answers, and nothing else here would say so.
+   */
+  const posts = [];
+  for (const { address, file } of pages()) {
+    const base = new URL(address, "http://site.invalid");
+    for (const m of read(file).matchAll(/action="([^"]*)"/gu)) {
+      posts.push(`${file}: ${new URL(m[1], base).pathname}`);
+    }
+  }
+  assert.deepEqual(posts, [
+    "index.html: /api/v1/waitlist",
+    "waitlist.html: /api/v1/waitlist",
+  ]);
 });
 
 test("every internal link resolves to an address the server serves", () => {

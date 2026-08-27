@@ -29,7 +29,7 @@
 
 // Read by the boot script's ?why diagnostics: proof this module's graph
 // loaded, and which revision of it.
-window.__kumiSiteRev = "w14";
+window.__kumiSiteRev = "w15";
 
 // A breadcrumb per top-level step, printed by the ?why panel. On one phone
 // the module provably ran its first statement and provably reached none of
@@ -195,8 +195,14 @@ function disarm() {
  * that belongs behind that particular gate.
  */
 function waitlist() {
+  // Ends-with, not equals: the attribute is relative in the markup —
+  // root-absolute, it escapes the preview proxy's path prefix and posts to
+  // the deployment's API instead of this site's — and an ends-with match
+  // also keeps a cached copy of the old absolute markup wired. `form.action`
+  // (the property, used by the submit handler) resolves the relative
+  // attribute against the page's real address, whatever depth it is at.
   for (const form of document.querySelectorAll(
-    '.join[action="/api/v1/waitlist"]',
+    'form.join[action$="api/v1/waitlist"]',
   )) {
     wireWaitlist(form);
   }

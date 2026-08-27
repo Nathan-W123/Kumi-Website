@@ -176,6 +176,37 @@ export function waitlistFailurePage(bytes) {
 }
 
 /**
+ * And what that browser is shown when the gateway says yes.
+ *
+ * The gateway answers acceptance in JSON too, so a submit that finally
+ * worked would still have filled a phone's screen with {"added":true} — the
+ * same photograph of raw JSON that got the refusal reported as a bug, now
+ * standing for success. Same translation as the refusal, opposite mood.
+ */
+export function waitlistSuccessPage(bytes) {
+  let already = false;
+  try {
+    already = JSON.parse(bytes.toString("utf8"))?.added === false;
+  } catch {
+    // Unreadable acceptance is still acceptance; say the ordinary thing.
+  }
+  const line = already
+    ? "You are already on the list. We will be in touch."
+    : "You are on the list. We will be in touch.";
+  return `<!doctype html>
+<meta charset="utf-8">
+<title>Waitlist — Kumi</title>
+<link rel="stylesheet" href="/site.css">
+<div class="wrap" style="padding: 96px 0">
+  <p class="eyebrow">Waitlist</p>
+  <h1 style="font-size: 32px; letter-spacing: -0.02em">That went through.</h1>
+  <p class="sub" style="margin-top: 16px">${line}</p>
+  <p style="margin-top: 24px"><a class="btn btn-primary" href="/">Back to the site</a></p>
+</div>
+`;
+}
+
+/**
  * Keep the marketing origin as the form's front door while the deployment
  * remains the system that owns the waitlist. This also preserves the plain
  * HTML response for a browser without JavaScript and the JSON response used
@@ -204,8 +235,12 @@ async function proxyWaitlist(request, response) {
     });
     const bytes = Buffer.from(await reply.arrayBuffer());
     const type = reply.headers.get("content-type") ?? "application/octet-stream";
-    if (!reply.ok && !wantsJson && type.includes("application/json")) {
-      send(response, reply.status, "text/html; charset=utf-8", waitlistFailurePage(bytes));
+    // A document navigation shows whatever comes back AS the page, and the
+    // gateway speaks JSON in both moods. Translate both, not just the
+    // refusal: {"added":true} filling a phone's screen reads as a bug too.
+    if (!wantsJson && type.includes("application/json")) {
+      const page = reply.ok ? waitlistSuccessPage(bytes) : waitlistFailurePage(bytes);
+      send(response, reply.status, "text/html; charset=utf-8", page);
       return;
     }
     send(response, reply.status, type, bytes);

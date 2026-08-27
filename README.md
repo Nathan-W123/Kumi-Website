@@ -31,12 +31,15 @@ copy to keep in step.
 
 ### One thing the move costs
 
-The waitlist form posts to `/api/v1/waitlist`, which is a route on the
-**gateway**, not on this server. While the site was served from the gateway
-that was a same-origin POST and it worked. Served from anywhere else it is
-cross-origin, and it will fail until either the form posts at the deployment's
-absolute address with CORS allowed for this origin, or this site is served
-behind something that proxies `/api/` through. That decision is open.
+The waitlist really belongs to the **gateway**, not to this server. The
+decision that used to be open here is made: `server.mjs` proxies
+`/api/v1/waitlist` through to the deployment, naming the gateway's own origin
+on the forward — the one origin it is certain to accept. The forms post to
+`api/v1/waitlist` **relative**, like every other reference in these pages,
+and it matters more here than anywhere: root-absolute, the post escapes the
+preview proxy's path prefix and lands on the deployment's own API, which
+answers a phone with a page of `origin_rejected` JSON. The tests hold the
+action to the same no-leading-slash rule as every `href` and `src`.
 
 ## Running it
 

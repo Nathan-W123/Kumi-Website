@@ -512,9 +512,10 @@ strong {
 }
 
 /* One pass of light across the primary button per hover-entry. Triggered by
-   hover, so coarse pointers never see it; the animation itself is stilled
-   with everything else in the reduced-motion block. */
-@media (hover: hover) {
+   hover, so coarse pointers never see it — and declared, like every other
+   animation in this file, only where motion is welcome: a reader who asked
+   for stillness gets no sweep and no parked gradient to unrender. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .btn-primary::after {
     content: "";
     position: absolute;
