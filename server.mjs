@@ -112,6 +112,33 @@ async function readRequestBody(request) {
 }
 
 /**
+ * The readable CSRF token in a Cookie header, if it carries one.
+ *
+ * Cookie names are deliberately matched by purpose. Kumi may add a
+ * `__Host-` prefix without requiring every separately deployed copy of the
+ * marketing site to change in lockstep.
+ */
+export function csrfTokenFromCookies(cookies = "") {
+  for (const part of cookies.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator === -1) {
+      continue;
+    }
+    const name = part.slice(0, separator).trim();
+    if (!/(?:^|[-_])(?:csrf|xsrf)(?:[-_]|$)/iu.test(name)) {
+      continue;
+    }
+    const value = part.slice(separator + 1).trim();
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+  return "";
+}
+
+/**
  * The headers a proxied submission carries to the gateway.
  *
  * The origin line is the whole reason this function exists to be tested. The
@@ -125,13 +152,34 @@ async function readRequestBody(request) {
  * served by the gateway, same-origin, and worked. So the proxy names it
  * explicitly, and never repeats whatever origin the browser sent here — a
  * preview's address is not something the gateway can be expected to know.
+ *
+ * An existing session adds a second guard. Its readable CSRF cookie must be
+ * echoed in a header, and both it and the session cookie must survive the
+ * preview relay. Native forms cannot set that header, so the relay derives it
+ * from the same cookie when site.js was unavailable. Cookies are forwarded
+ * only when a CSRF token is present; unrelated preview cookies never travel
+ * to the product deployment.
  */
 export function waitlistUpstreamHeaders(incoming) {
-  return {
+  const headers = {
     "content-type": incoming["content-type"] ?? "application/octet-stream",
     accept: incoming.accept ?? "text/html",
     origin: new URL(APP_ORIGIN).origin,
   };
+  const cookie = typeof incoming.cookie === "string" ? incoming.cookie : "";
+  const cookieToken = csrfTokenFromCookies(cookie);
+  const sentToken = incoming["x-csrf-token"];
+  const token =
+    typeof sentToken === "string" && sentToken !== ""
+      ? sentToken
+      : cookieToken;
+  if (token !== "") {
+    headers["x-csrf-token"] = token;
+    if (cookieToken !== "") {
+      headers.cookie = cookie;
+    }
+  }
+  return headers;
 }
 
 /**

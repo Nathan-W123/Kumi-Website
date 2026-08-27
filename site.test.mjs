@@ -36,6 +36,7 @@ import { fileURLToPath } from "node:url";
 import {
   APP_ORIGIN,
   ROUTES,
+  csrfTokenFromCookies,
   waitlistFailurePage,
   waitlistSuccessPage,
   waitlistUpstreamHeaders,
@@ -195,6 +196,8 @@ test("the front-page waitlist starts and finishes in place", () => {
   const script = read("site.js");
   assert.match(script, /fetch\(form\.action,/u);
   assert.match(script, /event\.preventDefault\(\)/u);
+  assert.match(script, /headers\["x-csrf-token"\] = token/u);
+  assert.match(script, /credentials: "same-origin"/u);
   assert.doesNotMatch(
     script,
     /^import .*\.\/field\.js/mu,
@@ -242,6 +245,35 @@ test("the proxied waitlist submission carries an origin the gateway allows", () 
   // And a submission with no stated wants still reads as the plain form post
   // it is.
   assert.equal(forwarded.accept, "text/html");
+});
+
+test("the waitlist preserves an existing session's CSRF pair", () => {
+  const cookie =
+    "theme=dark; __Host-kumi-session=session-secret; " +
+    "__Host-kumi-csrf=token%2Fwith%2Bencoding";
+  assert.equal(csrfTokenFromCookies(cookie), "token/with+encoding");
+
+  // JavaScript echoes the token itself. The relay still carries the cookies
+  // because the gateway needs the session and readable cookie as well as the
+  // header in order to validate the pair.
+  const scripted = waitlistUpstreamHeaders({
+    cookie,
+    "x-csrf-token": "token/with+encoding",
+  });
+  assert.equal(scripted.cookie, cookie);
+  assert.equal(scripted["x-csrf-token"], "token/with+encoding");
+
+  // A native form cannot author a custom header. The relay reads the same
+  // token from its cookie, so the no-JavaScript path remains functional too.
+  const native = waitlistUpstreamHeaders({ cookie });
+  assert.equal(native.cookie, cookie);
+  assert.equal(native["x-csrf-token"], "token/with+encoding");
+
+  // No CSRF cookie means an anonymous waitlist submission. Do not send
+  // unrelated cookies from the preview to a different deployment.
+  const anonymous = waitlistUpstreamHeaders({ cookie: "preview_session=not-for-kumi" });
+  assert.equal(anonymous.cookie, undefined);
+  assert.equal(anonymous["x-csrf-token"], undefined);
 });
 
 test("a navigated waitlist refusal is a page, not a screenful of JSON", () => {

@@ -29,7 +29,7 @@
 
 // Read by the boot script's ?why diagnostics: proof this module's graph
 // loaded, and which revision of it.
-window.__kumiSiteRev = "w15";
+window.__kumiSiteRev = "w16";
 
 // A breadcrumb per top-level step, printed by the ?why panel. On one phone
 // the module provably ran its first statement and provably reached none of
@@ -208,6 +208,37 @@ function waitlist() {
   }
 }
 
+/**
+ * The readable half of an existing Kumi session's CSRF pair.
+ *
+ * The product names this cookie; the marketing site only needs to recognise
+ * its purpose. Matching `csrf`/`xsrf` rather than copying the current name
+ * keeps an old page working if the cookie is hardened with a prefix later.
+ * Anonymous visitors have no such cookie and need no header.
+ */
+function csrfToken(cookies = document.cookie) {
+  for (const part of cookies.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator === -1) {
+      continue;
+    }
+    const name = part.slice(0, separator).trim();
+    if (!/(?:^|[-_])(?:csrf|xsrf)(?:[-_]|$)/iu.test(name)) {
+      continue;
+    }
+    const value = part.slice(separator + 1).trim();
+    try {
+      return decodeURIComponent(value);
+    } catch (error) {
+      // A cookie value need not be percent-encoded. If it merely contains a
+      // stray percent sign, the value the server issued is still the value
+      // it expects back.
+      return value;
+    }
+  }
+  return "";
+}
+
 function wireWaitlist(form) {
   const say = form.querySelector(".join-say");
   const button = form.querySelector("button");
@@ -232,12 +263,21 @@ function wireWaitlist(form) {
     // said lands here — never a browser's "Failed to fetch" — so the catch
     // below can tell a named refusal from a network that simply died.
     let refusal = "";
+    const headers = {
+      "content-type": "application/json",
+      accept: "application/json",
+    };
+    const token = csrfToken();
+    if (token !== "") {
+      // A signed-in browser sends its session cookies automatically. Echoing
+      // the readable CSRF cookie in this header completes that pair; without
+      // it the public form works signed out and is refused signed in.
+      headers["x-csrf-token"] = token;
+    }
     fetch(form.action, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        accept: "application/json",
-      },
+      headers,
+      credentials: "same-origin",
       body: JSON.stringify(answers),
     })
       .then(async (reply) => {
