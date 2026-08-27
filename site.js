@@ -339,7 +339,7 @@ function textNodeOf(el) {
  * line is done. The full text came from the HTML and goes back to the HTML:
  * an undoer restores it, and a disarm mid-type completes instantly.
  */
-function typeInto(p) {
+function typeInto(p, tick = 18) {
   const node = textNodeOf(p);
   if (node === undefined) {
     return later(400);
@@ -367,7 +367,7 @@ function typeInto(p) {
         caret.remove();
         resolve();
       }
-    }, 18);
+    }, tick);
     intervals.push(interval);
   });
 }
@@ -733,6 +733,12 @@ function wire() {
  * undoer or was hidden in the markup to begin with.
  */
 function channelStory(animate, inView) {
+  // The replay's clock. 1 is the pace the demo was written at; below it,
+  // everything — typing, entrances, the waits between beats, the hold —
+  // stretches by the same factor, so slowing down never changes the rhythm,
+  // only the tempo.
+  const PACE = 0.8;
+  const slow = (ms) => ms / PACE;
   const shot = document.querySelector(".app-shot");
   if (shot === null) {
     return;
@@ -758,18 +764,32 @@ function channelStory(animate, inView) {
     }
   });
 
-  // The typing row is hidden markup until the player owns it, and hidden
-  // markup again if the player disarms.
-  const typing = shot.querySelector(".typing");
-  if (typing !== null) {
-    typing.hidden = false;
+  // The typing rows — the channel's and the thread's — are hidden markup
+  // until the player owns them, and hidden markup again if it disarms. Each
+  // is named, so a step says which one it ends.
+  const typings = new Map();
+  for (const row of shot.querySelectorAll(".typing[data-typing]")) {
+    typings.set(row.dataset.typing, row);
+    row.hidden = false;
     undoers.push(() => {
-      typing.hidden = true;
-      typing.style.opacity = "";
+      row.hidden = true;
+      row.style.opacity = "";
     });
   }
 
+  // The room owns the whole width until the thread arrives; the HTML ships
+  // thread-open (the finished scene) and the player closes it to start.
+  // Measured open, the figure keeps the height of its final state, so the
+  // panel sliding in — and every loop after it — never pumps the page.
+  shot.style.minHeight = `${shot.offsetHeight}px`;
+  shot.classList.remove("thread-open");
+  undoers.push(() => {
+    shot.style.minHeight = "";
+    shot.classList.add("thread-open");
+  });
+
   const reset = () => {
+    shot.classList.remove("thread-open");
     for (const el of steps) {
       el.style.opacity = "0";
       el.style.transform = "";
@@ -808,17 +828,27 @@ function channelStory(animate, inView) {
       if (disarmed) {
         return;
       }
-      await later(4600);
+      await later(slow(4600));
       if (disarmed) {
         return;
       }
-      animate(feed, { opacity: [1, 0] }, { duration: 0.45, ease: "easeOut" });
-      await later(500);
+      // The thread panel lives outside the feed, so the loop's fade has to
+      // carry it too — reset() alone would snap it off mid-frame.
+      const panel = shot.querySelector(".shot-thread");
+      if (panel !== null) {
+        animate(
+          panel,
+          { opacity: [1, 0] },
+          { duration: 0.45 / PACE, ease: "easeOut" },
+        );
+      }
+      animate(feed, { opacity: [1, 0] }, { duration: 0.45 / PACE, ease: "easeOut" });
+      await later(slow(500));
       if (disarmed) {
         return;
       }
       reset();
-      animate(feed, { opacity: [0, 1] }, { duration: 0.3, ease: "easeOut" });
+      animate(feed, { opacity: [0, 1] }, { duration: 0.3 / PACE, ease: "easeOut" });
       while (!onScreen && !disarmed) {
         await later(700);
       }
@@ -833,8 +863,13 @@ function channelStory(animate, inView) {
       if (disarmed) {
         return;
       }
-      if (el.dataset.clearsTyping !== undefined && typing !== null) {
-        animate(typing, { opacity: [1, 0] }, { duration: 0.3, ease: "easeOut" });
+      const clears = typings.get(el.dataset.clearsTyping);
+      if (clears !== undefined) {
+        animate(
+          clears,
+          { opacity: [1, 0] },
+          { duration: 0.3 / PACE, ease: "easeOut" },
+        );
       }
       // One step can settle several chips at once — the channel's and the
       // thread panel's copy of the same agent going quiet together.
@@ -846,21 +881,32 @@ function channelStory(animate, inView) {
         }
       }
       const card = el.classList.contains("arb-card");
+      const panel = el.classList.contains("shot-thread");
+      if (panel) {
+        // The class drives the column's width transition; the element's own
+        // entrance rides along, sliding in from the right it grows out of.
+        shot.classList.add("thread-open");
+      }
       animate(
         el,
         card
           ? { opacity: [0, 1], transform: ["scale(0.92)", "scale(1)"] }
-          : {
-              opacity: [0, 1],
-              transform: ["translateY(10px)", "translateY(0px)"],
-            },
-        { duration: card ? 0.5 : 0.4, ease: EASE },
+          : panel
+            ? {
+                opacity: [0, 1],
+                transform: ["translateX(24px)", "translateX(0px)"],
+              }
+            : {
+                opacity: [0, 1],
+                transform: ["translateY(10px)", "translateY(0px)"],
+              },
+        { duration: (card ? 0.5 : panel ? 0.6 : 0.4) / PACE, ease: EASE },
       );
       if (el.dataset.type !== undefined) {
-        await typeInto(el.querySelector(".m-text"));
-        await later(260);
+        await typeInto(el.querySelector(".m-text"), slow(18));
+        await later(slow(260));
       } else {
-        await later(card ? 1100 : 640);
+        await later(slow(card ? 1100 : panel ? 1000 : 640));
       }
     }
   }
