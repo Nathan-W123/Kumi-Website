@@ -919,41 +919,6 @@ strong {
   line-height: 1.6;
 }
 
-/* ---------------------------------------------------------------- orbit -- */
-
-/*
- * The names that turn up in a channel. Pills rather than a logo wall: these
- * are participants in a conversation, and a row of trademarks would promise
- * an integrations directory this product does not have.
- */
-.orbit {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 64px;
-}
-
-.orbit-pill {
-  padding: 9px 18px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--surface-1) 70%, transparent);
-  backdrop-filter: blur(8px);
-  font-size: 14px;
-  color: var(--muted);
-  transition: transform 0.3s var(--ease-motion),
-    border-color 0.3s var(--ease-motion), color 0.3s var(--ease-motion);
-}
-
-@media (hover: hover) {
-  .orbit-pill:hover {
-    transform: translateY(-2px);
-    border-color: var(--border-strong);
-    color: var(--text);
-  }
-}
-
 /* ---------------------------------------------------------------- cards -- */
 
 .cards {
@@ -1009,178 +974,228 @@ strong {
   }
 }
 
-/* ----------------------------------------------------------------- room -- */
+/* ------------------------------------------------------------------ sky -- */
 
 /*
- * The room as one orbit, seen at an angle.
+ * The argument, as a constellation.
  *
- * Six seats ride a single ring — three people, three agents — joined in two
- * interlocking triangles, and a reach travels across the ring from one seat
- * to another in turn: person to person, person to agent, agent to agent.
- * Everything here is thin line and small dot on purpose. An earlier version
- * of this drew the participants as avatars and chips, and a room full of
- * furniture said far less than a room drawn as one weightless circle.
+ * White stars on night, turning slowly about their own centre, and three
+ * beats of line-drawing that make a case rather than a diagram: separate
+ * islands, then two lines converging on one star, then a single joined
+ * figure. The caption underneath names each in turn.
  *
- * site.js turns the ring and moves the reach. Without it the markup is still
- * the picture: a ring, its seats, and the web between them.
+ * One twelve-second clock runs all of it. Every beat is the same pair of
+ * keyframes started four seconds after the last, and within a beat each line
+ * is nudged a further beat behind its neighbour by its own index, so a
+ * constellation builds rather than blinking on whole. At rest — which is
+ * what a reader who asked for less motion sees — the sky holds still with
+ * every line drawn and the first caption showing.
  */
 
-.orbit {
-  max-width: 760px;
+.sky-fig {
+  max-width: 660px;
   margin-inline: auto;
 }
 
-.orbit-net {
+.sky-net {
   display: block;
   width: 100%;
   height: auto;
-  overflow: visible;
 }
 
-.calm-in {
+.dark-in {
   stop-color: var(--bg-deep);
-  stop-opacity: 0.74;
+  stop-opacity: 0.84;
 }
 
-.calm-mid {
+.dark-mid {
   stop-color: var(--bg-deep);
-  stop-opacity: 0.36;
+  stop-opacity: 0.48;
 }
 
-.calm-out {
+.dark-out {
   stop-color: var(--bg-deep);
   stop-opacity: 0;
 }
 
-.ring {
-  fill: none;
-  stroke: color-mix(in srgb, var(--muted) 42%, transparent);
+/* Two shadows rather than one: a tight core and a wide halo is what reads
+   as a star rather than as a dot somebody blurred. */
+.star {
+  fill: #fff;
+  filter: drop-shadow(0 0 4px rgb(255 255 255 / 78%))
+    drop-shadow(0 0 12px rgb(255 255 255 / 34%));
+}
+
+.star.dim {
+  opacity: 0.5;
+  filter: drop-shadow(0 0 3px rgb(255 255 255 / 45%));
+}
+
+/* Drawn, and staying drawn: the resting sky. The beats below only take it
+   over where motion is welcome. */
+.link {
+  stroke: rgb(255 255 255 / 72%);
   stroke-width: 1;
-}
-
-/* Depth, in one declaration: the half of the ring running behind the seats
-   is the half you can barely see. */
-.ring.far {
-  stroke: color-mix(in srgb, var(--muted) 18%, transparent);
-}
-
-.web {
-  stroke: color-mix(in srgb, var(--muted) 16%, transparent);
-  stroke-width: 1;
-}
-
-.seat.person {
-  fill: var(--salmon);
-}
-
-/* Agents are the same size and the same orbit, drawn hollow — one shape
-   apart, which is all the difference the picture needs to make. */
-.seat.agent {
-  fill: none;
-  stroke: var(--lavender);
-  stroke-width: 1.8;
-}
-
-.reach {
-  fill: none;
-  stroke-width: 2.4;
   stroke-linecap: round;
   stroke-dasharray: 100 100;
-  stroke-dashoffset: 100;
-  opacity: 0;
+  stroke-dashoffset: 0;
+  opacity: 0.4;
 }
 
-.bead,
-.land {
-  opacity: 0;
-}
-
-.land {
-  fill: none;
-  stroke-width: 1.4;
-}
-
-.reach.from-person,
-.land.from-person {
-  stroke: var(--salmon);
-}
-
-.reach.from-person {
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--salmon) 60%, transparent));
-}
-
-.reach.from-agent {
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--lavender) 60%, transparent));
-}
-
-.bead.from-person {
-  fill: var(--text);
-  filter: drop-shadow(0 0 5px var(--salmon));
-}
-
-.reach.from-agent,
-.land.from-agent {
-  stroke: var(--lavender);
-}
-
-.bead.from-agent {
-  fill: var(--text);
-  filter: drop-shadow(0 0 5px var(--lavender));
-}
-
-.orbit-key {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px 28px;
-  margin-top: 26px;
-  font-size: 12px;
-  letter-spacing: 0.01em;
-  color: color-mix(in srgb, var(--faint) 78%, transparent);
-}
-
-.key {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: color 0.45s var(--ease-motion);
-}
-
-/* The legend is not a caption, it is a readout: the pairing being drawn on
-   the ring is the one that lights up down here. */
-.key.live {
+/* Every caption sits in one grid cell so they cross-fade in place rather
+   than pushing each other around. */
+.sky-say {
+  display: grid;
+  justify-items: center;
+  margin-top: 24px;
+  padding-inline: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
   color: var(--muted);
 }
 
-.k {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  opacity: 0.75;
-  transition: opacity 0.45s var(--ease-motion);
+.say {
+  grid-area: 1 / 1;
+  opacity: 0;
 }
 
-.k.person {
-  background: var(--salmon);
-}
-
-.k.agent {
-  background: none;
-  box-shadow: inset 0 0 0 1.4px var(--lavender);
-}
-
-.key.live .k {
+.say[data-beat="1"] {
   opacity: 1;
 }
 
-.k + .k {
-  margin-right: 5px;
+@media (prefers-reduced-motion: no-preference) {
+  .sky {
+    transform-box: view-box;
+    transform-origin: 280px 150px;
+    animation: sky-turn 150s linear infinite;
+  }
+
+  .star {
+    animation: star-breathe 5.5s ease-in-out infinite;
+  }
+
+  .star:nth-child(3n + 2) {
+    animation-delay: 1.9s;
+  }
+
+  .star:nth-child(3n + 3) {
+    animation-delay: 3.7s;
+  }
+
+  /*
+   * `backwards` matters: without it a delayed beat sits at its resting
+   * state — drawn, at rest opacity — for the four or eight seconds before
+   * its turn, so the sky opened with every line showing and then lost them
+   * one by one. With it, a beat is invisible until it is due.
+   *
+   * The index shifts each line inside its own beat; the hold ends early
+   * enough that even the last one has faded before the next beat opens.
+   */
+  .link {
+    animation: link-draw 12s ease-out infinite backwards;
+    animation-delay: calc(var(--start, 0s) + var(--i, 0) * 0.07s);
+    stroke: #fff;
+    filter: drop-shadow(0 0 5px rgb(255 255 255 / 45%));
+  }
+
+  .link[data-beat="2"] {
+    --start: 4s;
+  }
+
+  .link[data-beat="3"] {
+    --start: 8s;
+  }
+
+  .say {
+    animation: say-show 12s var(--ease-motion) infinite backwards;
+  }
+
+  .say[data-beat="2"] {
+    animation-delay: 4s;
+  }
+
+  .say[data-beat="3"] {
+    animation-delay: 8s;
+  }
 }
 
+/* A phone shows the same band of water at a third of the width, so the
+   bloom behind the stars is proportionally far brighter. Deeper night. */
 @media (max-width: 620px) {
-  .orbit-key {
-    gap: 8px 18px;
-    font-size: 11.5px;
+  .dark-in {
+    stop-opacity: 0.93;
+  }
+
+  .dark-mid {
+    stop-opacity: 0.68;
+  }
+
+  .sky-say {
+    font-size: 13.5px;
+  }
+}
+
+@keyframes sky-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes star-breathe {
+  0%,
+  100% {
+    opacity: 0.74;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes link-draw {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+
+  2% {
+    opacity: 0.9;
+  }
+
+  9% {
+    stroke-dashoffset: 0;
+    opacity: 0.9;
+  }
+
+  22% {
+    stroke-dashoffset: 0;
+    opacity: 0.9;
+  }
+
+  27%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes say-show {
+  0% {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  4%,
+  26% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  31%,
+  100% {
+    opacity: 0;
+    transform: translateY(-7px);
   }
 }
 
