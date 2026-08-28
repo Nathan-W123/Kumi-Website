@@ -59,6 +59,10 @@ export const ROUTES = new Map([
   ["/fonts/LICENSE.md", ["fonts/LICENSE.md", "text/plain; charset=utf-8"]],
   ["/kumi-logo.png", ["kumi-logo.png", "image/png"]],
   ["/kumi-mark.png", ["kumi-mark.png", "image/png"]],
+  // The tab icon as a vector: a few hundred bytes that render crisp at any
+  // size, where the PNG above is 1024 pixels of artwork a browser tab shows
+  // at sixteen. Pages link both — Safari does not take SVG favicons.
+  ["/favicon.svg", ["favicon.svg", "image/svg+xml"]],
   // Under /vendor/ for the reason the gateway puts it there: it is a minified
   // UMD build, and the checks that hold every first-party module to ES-module
   // rules skip this prefix. The licence travels with it — MIT requires that.

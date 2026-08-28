@@ -400,18 +400,18 @@ strong {
 }
 
 /* The mark alone: the name is the hero's, and saying it twice on one screen
-   makes neither of them the title. It is knocked white by filter, because
-   the artwork is a flat salmon silhouette with an alpha channel and
-   brightness(0) then invert(1) paints every opaque pixel white without
-   touching the shape. */
+   makes neither of them the title. The cube is inline SVG in currentColor
+   now — it arrives inside the HTML itself, so the corner can never sit
+   empty or show fallback text while an image fetch crawls in, and the
+   brightness(0) invert(1) filter that used to white-wash the PNG has
+   nothing left to repaint. */
 .nav-brand {
   display: inline-flex;
   align-items: center;
 }
 
-.nav-brand img {
+.nav-brand svg {
   flex: none;
-  filter: brightness(0) invert(1);
 }
 
 /* The middle group carries the spring that holds this against the right

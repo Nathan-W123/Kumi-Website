@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#121110">
     <meta name="description" content="How KUMI isolates agent work: one canonical repository, per-agent git worktrees, a deny-by-default sandbox, gated promotion, and an append-only audit trail.">
     <link rel="icon" href="kumi-mark.png">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
     <script src="site-boot.js"></script>
     <link rel="stylesheet" href="site.css">
     <link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
@@ -19,8 +20,12 @@
 
     <nav class="site-nav">
       <div class="wrap">
-        <a class="nav-brand" href=".">
-          <img src="kumi-mark.png" alt="KUMI" width="26" height="26">
+        <a class="nav-brand" href="." aria-label="KUMI">
+          <svg class="brand-mark" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2.6l8.4 4.8v9.2L12 21.4l-8.4-4.8V7.4Z"/>
+            <path d="M3.6 7.4 12 12.2l8.4-4.8M12 12.2v9.2"/>
+            <path d="M8.2 6.3l2.8-1.6M6.5 10.8v2.8M14.6 17.4l2.8-1.6"/>
+          </svg>
         </a>
         <div class="nav-end">
           <a class="nav-link" href="/app#signin">Sign in</a>

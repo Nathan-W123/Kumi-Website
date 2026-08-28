@@ -11,6 +11,7 @@
       content="KUMI is the coordination layer between your agents and your codebase: a chat channel on every repo, and every change planned, arbitrated, reviewed, and promoted into one canonical history."
     >
     <link rel="icon" href="kumi-mark.png">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
     <!-- First, parser-blocking, and deliberately so: it forwards legacy
          dashboard deep links (mailed /#welcome and /#reset links predate the
          move to /app) and installed desktop shells before this page paints,
@@ -35,10 +36,16 @@
       <div class="wrap">
         <!-- The mark is the whole brand here: the name is the hero's, and
              saying it twice on one screen makes neither of them the title.
-             With the word gone the alt text is this link's only accessible
-             name. -->
-        <a class="nav-brand" href=".">
-          <img src="kumi-mark.png" alt="KUMI" width="30" height="30">
+             With the word gone the aria-label is this link's only accessible
+             name. The cube is inline SVG rather than a fetched image so the
+             corner exists the moment the HTML does — it cannot arrive late
+             or render as fallback text over a slow link. -->
+        <a class="nav-brand" href="." aria-label="KUMI">
+          <svg class="brand-mark" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2.6l8.4 4.8v9.2L12 21.4l-8.4-4.8V7.4Z"/>
+            <path d="M3.6 7.4 12 12.2l8.4-4.8M12 12.2v9.2"/>
+            <path d="M8.2 6.3l2.8-1.6M6.5 10.8v2.8M14.6 17.4l2.8-1.6"/>
+          </svg>
         </a>
         <!-- No trial to start while this ships as a waitlist. Sign in
              stays: the people who already have access still need a

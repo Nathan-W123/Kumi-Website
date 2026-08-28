@@ -117,6 +117,7 @@ test("the marketing site is served at its own addresses", () => {
       ".js": "text/javascript; charset=utf-8",
       ".woff2": "font/woff2",
       ".png": "image/png",
+      ".svg": "image/svg+xml",
       ".md": "text/plain; charset=utf-8",
     }[path.extname(file)];
     assert.equal(type, expected, `${address} (${file}) is served as ${type}`);
@@ -1027,6 +1028,52 @@ test("no page fetches a font, script, style or image from another host", () => {
     offenders,
     [],
     `these load from a host this site does not control:\n  ${offenders.join("\n  ")}`,
+  );
+});
+
+test("the corner mark and the tab icon arrive with the page itself", () => {
+  /*
+   * The icons in every page's top-left corner — the nav's cube and the
+   * browser tab's favicon — used to be one and the same network fetch:
+   * kumi-mark.png, 1024 pixels and ~49KB, downscaled to under thirty and
+   * knocked white by a CSS filter. Over a slow link the corner rendered as
+   * alt text and the tab sat blank while the artwork crawled in, which is
+   * exactly how "the icons in the top left are not loading well" looks in
+   * a screenshot.
+   *
+   * So the cube is inline SVG now — it exists the moment the HTML does and
+   * cannot arrive late, blurry, or not at all — and every page also names
+   * a vector favicon a few hundred bytes long. The PNG favicon stays
+   * listed: Safari does not take SVG favicons, and the artwork itself
+   * stays routed for anything that already links it.
+   */
+  for (const { file } of pages()) {
+    const html = read(file);
+    const nav = html.slice(html.indexOf("<nav"), html.indexOf("</nav>"));
+    assert.match(
+      nav,
+      /<svg class="brand-mark"/u,
+      `${file}'s corner mark should be inline, not fetched`,
+    );
+    assert.doesNotMatch(
+      nav,
+      /<img\b/u,
+      `${file} still fetches an image into its nav`,
+    );
+    assert.match(
+      html,
+      /<link rel="icon" href="favicon\.svg" type="image\/svg\+xml" sizes="any">/u,
+      `${file} does not offer the vector favicon`,
+    );
+    assert.match(
+      html,
+      /<link rel="icon" href="kumi-mark\.png">/u,
+      `${file} dropped the PNG favicon Safari depends on`,
+    );
+  }
+  assert.ok(
+    ROUTES.has("/favicon.svg"),
+    "favicon.svg must be a route, or every page's icon link 404s in preview",
   );
 });
 
