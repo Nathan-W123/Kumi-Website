@@ -659,6 +659,29 @@ test("every stylesheet's braces balance", () => {
   );
 });
 
+test("the website demo does not expose an independently scrollable surface", () => {
+  const css = read("site.css");
+  for (const selector of ["shot-feed", "th-body"]) {
+    const blocks = [
+      ...css.matchAll(new RegExp(`(?:^|\\n)\\.${selector}\\s*\\{([^}]*)\\}`, "gu")),
+    ].map((match) => match[1]).join("\n");
+    assert.match(blocks, /overflow:\s*hidden/u, `.${selector} must keep page scrolling outside the demo`);
+    assert.doesNotMatch(blocks, /overflow-[xy]:\s*(?:auto|scroll)/u);
+  }
+});
+
+test("meaningful interactive elements provide subtle hover affordances", () => {
+  const css = read("site.css");
+  assert.match(css, /\.nav-link:hover[\s\S]*?background:/u);
+  assert.match(css, /\.btn-primary:hover[\s\S]*?background:/u);
+  assert.match(css, /\.btn-ghost:hover[\s\S]*?border-color:/u);
+  assert.match(
+    css,
+    /@media \(hover: hover\) and \(pointer: fine\) and \(prefers-reduced-motion: no-preference\)\s*\{\s*\.btn:hover\s*\{\s*transform:\s*translateY\(-2px\)/u,
+    "the clean lift belongs to real controls and only runs when motion is welcome",
+  );
+});
+
 /* ------------------------------------------------------- the boot forward -- */
 
 test("the front page forwards legacy deep links to /app", () => {
