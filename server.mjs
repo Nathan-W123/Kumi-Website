@@ -238,9 +238,12 @@ export function waitlistSuccessPage(bytes) {
   } catch {
     // Unreadable acceptance is still acceptance; say the ordinary thing.
   }
+  // Same words as site.js writes beside the button, and the sender named for
+  // the same reason: the confirmation comes from kumi.support, and mail from
+  // a sender nobody was told to expect is mail that gets binned.
   const line = already
-    ? "You are already on the list. We will be in touch."
-    : "You are on the list. We will be in touch.";
+    ? "You are already on the list. A confirmation from kumi.support is on its way."
+    : "You are on the list. A confirmation from kumi.support is on its way.";
   return `<!doctype html>
 <meta charset="utf-8">
 <title>Waitlist — Kumi</title>

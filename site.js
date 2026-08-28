@@ -29,7 +29,7 @@
 
 // Read by the boot script's ?why diagnostics: proof this module's graph
 // loaded, and which revision of it.
-window.__kumiSiteRev = "w17";
+window.__kumiSiteRev = "w18";
 
 // A breadcrumb per top-level step, printed by the ?why panel. On one phone
 // the module provably ran its first statement and provably reached none of
@@ -301,18 +301,21 @@ function wireWaitlist(form) {
         // already has an account — any difference would make the form a way
         // to ask which addresses this deployment knows about — so saying
         // anything more specific here would invent a distinction the server
-        // refused to make.
-        say.textContent = "You are on the list. We will be in touch.";
+        // refused to make. The sender is named on purpose: the confirmation
+        // comes from kumi.support, and mail from a sender nobody was told to
+        // expect is mail that gets binned.
+        say.textContent =
+          "You are on the list. A confirmation from kumi.support is on its way.";
         form.reset();
       })
       .catch(() => {
         say.classList.add("bad");
         // A named refusal on the screen is what turns the next phone
         // screenshot into a diagnosis. When there is no name — the network
-        // died, the answer was not JSON — no invented support address here:
-        // there is not one to give yet, and a page that tells somebody to
-        // write to a mailbox nobody reads is worse than one that simply says
-        // it failed.
+        // died, the answer was not JSON — no support address here:
+        // kumi.support signs the confirmations that follow a signup that
+        // WORKED, and pointing a failed submit at it would send somebody to
+        // ask a mailbox about an address it never received.
         say.textContent =
           refusal === ""
             ? "That did not reach the server. Please try again."

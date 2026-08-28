@@ -326,6 +326,39 @@ test("a navigated waitlist acceptance is a page too", () => {
   assert.match(waitlistSuccessPage(Buffer.from("ok")), /You are on the list\./u);
 });
 
+test("every signup confirmation names kumi.support as the sender", () => {
+  /*
+   * The confirmation mail comes from kumi.support, and mail from a sender
+   * nobody was told to expect is mail that gets binned — or distrusted as
+   * phishing and reported. So the moment a signup goes through, the site says
+   * who will write. That promise is made in two files that get edited apart:
+   * the in-place answer site.js writes beside the button, and the page
+   * server.mjs shows a browser that navigated the form without JavaScript.
+   * Pinned in both, so a rewrite of one cannot quietly orphan the other.
+   */
+  const sender = /A confirmation from kumi\.support is on its way\./u;
+  assert.match(read("site.js"), sender, "the in-place answer must name the sender");
+  assert.match(
+    waitlistSuccessPage(Buffer.from(JSON.stringify({ added: true }))),
+    sender,
+    "the navigated acceptance page must name the sender",
+  );
+  // An address already on the list gets the same sender to watch for — the
+  // page already distinguishes "already", and that is all it distinguishes.
+  assert.match(
+    waitlistSuccessPage(Buffer.from(JSON.stringify({ added: false }))),
+    sender,
+    "the already-on-the-list page must name the sender too",
+  );
+  // The refusal pages stay sender-free on purpose: kumi.support confirms
+  // signups that worked, and a failure page pointing at it would send
+  // somebody to ask a mailbox about an address it never received.
+  assert.doesNotMatch(
+    waitlistFailurePage(Buffer.from(JSON.stringify({ error: "No." }))),
+    /kumi\.support/u,
+  );
+});
+
 test("no marketing address is cached beyond the checkout that served it", () => {
   /*
    * The monorepo's version of this asserted that no marketing key was marked
