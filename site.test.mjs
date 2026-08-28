@@ -1131,8 +1131,8 @@ test("every download the page offers is a file the packager actually builds", ()
 /*
  * The waitlist form posts the names the deployment reads.
  *
- * This is the one form on the site and it talks to a service in another
- * repository, which is the whole problem: `POST /api/v1/waitlist` reads
+ * The form ultimately talks to a service in another repository, which is the
+ * whole problem: `POST /api/v1/waitlist` reads
  * `email`, `displayName`, `note` and `source`, and it ignores anything else
  * in silence rather than refusing it. So a field renamed on this side is not
  * an error anywhere — the form submits, the server answers 202, and what
@@ -1147,11 +1147,13 @@ test("every download the page offers is a file the packager actually builds", ()
 test("the waitlist form posts the fields the deployment actually reads", () => {
   const page = read("waitlist.html");
 
-  // The API is not served from this origin, so this action has to be absolute
-  // and has to be the deployment. A relative one resolves against the site and
-  // 404s; a different host would post somebody's address somewhere else.
+  // The API is not served from this origin, but the action is relative on
+  // purpose: server.mjs proxies /api/v1/waitlist to the deployment with an
+  // origin the gateway accepts. An absolute action would post straight to the
+  // deployment and be refused; a root-absolute one would escape a preview's
+  // path prefix. Relative, it resolves to the one path the server forwards.
   const action = /<form[^>]*\baction="([^"]+)"/u.exec(page)?.[1];
-  assert.equal(action, "https://kumi.up.railway.app/api/v1/waitlist");
+  assert.equal(action, "api/v1/waitlist");
 
   const named = new Set(
     [...page.matchAll(/<(?:input|textarea|select)[^>]*\bname="([^"]+)"/gu)].map(
