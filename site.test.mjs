@@ -35,8 +35,13 @@ import { fileURLToPath } from "node:url";
 
 import {
   APP_ORIGIN,
+  RESEND_ENDPOINT,
   ROUTES,
+  WAITLIST_FROM,
+  confirmationEmail,
   csrfTokenFromCookies,
+  sendWaitlistConfirmation,
+  waitlistAddressFromBody,
   waitlistFailurePage,
   waitlistSuccessPage,
   waitlistUpstreamHeaders,
@@ -356,6 +361,124 @@ test("every signup confirmation names kumi.support as the sender", () => {
   assert.doesNotMatch(
     waitlistFailurePage(Buffer.from(JSON.stringify({ error: "No." }))),
     /kumi\.support/u,
+  );
+});
+
+test("the confirmation finds the address in either body the form sends", () => {
+  /*
+   * Two shapes reach the proxy: site.js gathers the form and posts JSON, and
+   * a browser without JavaScript posts it urlencoded. The promise of a
+   * confirmation is made on both paths, so the address has to be readable
+   * from both — and everything unreadable has to come back as "", because by
+   * the time this runs the gateway has already said yes, and a parse that
+   * threw would turn an accepted signup into a 502.
+   */
+  const scripted = Buffer.from(
+    JSON.stringify({ source: "website", displayName: "N", email: " n@example.com ", note: "" }),
+  );
+  assert.equal(waitlistAddressFromBody(scripted, "application/json"), "n@example.com");
+
+  const native = Buffer.from("source=website&displayName=N&email=n%40example.com&note=");
+  assert.equal(
+    waitlistAddressFromBody(native, "application/x-www-form-urlencoded"),
+    "n@example.com",
+  );
+
+  // The unreadable shapes: not JSON after all, a field of the wrong type, no
+  // field, nothing address-shaped. Silence, not a crash, in every case.
+  assert.equal(waitlistAddressFromBody(Buffer.from("{not json"), "application/json"), "");
+  assert.equal(
+    waitlistAddressFromBody(Buffer.from(JSON.stringify({ email: 7 })), "application/json"),
+    "",
+  );
+  assert.equal(
+    waitlistAddressFromBody(Buffer.from("displayName=N"), "application/x-www-form-urlencoded"),
+    "",
+  );
+  assert.equal(
+    waitlistAddressFromBody(Buffer.from("email=word"), "application/x-www-form-urlencoded"),
+    "",
+  );
+});
+
+test("the confirmation mail leaves the moment the gateway accepts", async () => {
+  /*
+   * The pages promise mail from kumi.support; this is the machinery that
+   * keeps the promise. The envelope is held by a stub so the suite never
+   * touches the network, and what is asserted is what deliverability and the
+   * promise both depend on: the provider's own endpoint, the key as a bearer,
+   * a sender on the domain the pages told people to watch for, and the mail
+   * opening with the same words the site answered with.
+   */
+  assert.match(
+    WAITLIST_FROM,
+    /@kumi\.support>?$/u,
+    "the sender must live on the domain the pages promise",
+  );
+
+  const calls = [];
+  const deliver = async (url, init) => {
+    calls.push({ url, init });
+    return { ok: true, status: 200 };
+  };
+  const sent = await sendWaitlistConfirmation("n@example.com", { key: "re_test", deliver });
+  assert.equal(sent, true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, RESEND_ENDPOINT);
+  assert.equal(calls[0].init.method, "POST");
+  assert.equal(calls[0].init.headers.authorization, "Bearer re_test");
+
+  const mail = JSON.parse(calls[0].init.body);
+  assert.deepEqual(mail.to, ["n@example.com"]);
+  assert.equal(mail.from, WAITLIST_FROM);
+  assert.match(mail.subject, /waitlist/iu);
+  assert.match(mail.text, /You are on the list\./u, "the inbox confirms the screen");
+  assert.deepEqual(mail, confirmationEmail("n@example.com"));
+
+  // And the proxy actually fires it — unawaited, so no visitor's answer ever
+  // waits on a mail API. Pinned in the source the way site.js's wiring order
+  // is pinned above: this is the line whose quiet loss would break the
+  // promise while every page still made it.
+  assert.match(read("server.mjs"), /void sendWaitlistConfirmation\(/u);
+});
+
+test("a confirmation that cannot send never breaks the signup", async () => {
+  /*
+   * The mail is a consequence of joining the list, not a condition of it. A
+   * missing key (the site working before anybody configures mail), an
+   * unverified domain, a provider that is down — each is a stderr line and a
+   * false, never a throw, because the gateway already accepted the address
+   * and the visitor must not be told otherwise over a mail they have not
+   * missed yet.
+   */
+  let asked = 0;
+  const counting = async () => {
+    asked += 1;
+    return { ok: true, status: 200 };
+  };
+  assert.equal(
+    await sendWaitlistConfirmation("n@example.com", { key: "", deliver: counting }),
+    false,
+  );
+  assert.equal(await sendWaitlistConfirmation("", { key: "re_test", deliver: counting }), false);
+  assert.equal(asked, 0, "no key or no address means nothing leaves at all");
+
+  const refused = async () => ({
+    ok: false,
+    status: 422,
+    text: async () => "domain is not verified",
+  });
+  assert.equal(
+    await sendWaitlistConfirmation("n@example.com", { key: "re_test", deliver: refused }),
+    false,
+  );
+
+  const dead = async () => {
+    throw new Error("network died");
+  };
+  assert.equal(
+    await sendWaitlistConfirmation("n@example.com", { key: "re_test", deliver: dead }),
+    false,
   );
 });
 
