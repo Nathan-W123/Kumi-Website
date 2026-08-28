@@ -851,6 +851,16 @@ test("no page fetches a font, script, style or image from another host", () => {
   );
 });
 
+test("the water field leaves the top lockup clear", () => {
+  const shader = read("field.js");
+  assert.match(shader, /float topClear = 1\.0 - smoothstep\(0\.76, 0\.82, fieldY\)/u);
+  assert.match(shader, /colour \*= topClear/u);
+  assert.ok(
+    shader.indexOf("colour *= topClear") < shader.indexOf("outColour ="),
+    "the clear zone must be applied to the final field before it is drawn",
+  );
+});
+
 test("no page carries an inline script or an inline event handler", () => {
   /*
    * The gateway's CSP has no `unsafe-inline`. An inline `<script>` body and an
