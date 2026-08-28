@@ -81,6 +81,31 @@ export const ROUTES = new Map([
  */
 export const APP_ORIGIN = process.env.KUMI_APP_ORIGIN ?? "https://kumi.up.railway.app";
 
+/**
+ * The machinery behind "a confirmation from kumi.support is on its way".
+ *
+ * Both answers a visitor can see — the line site.js writes beside the button
+ * and the page a scriptless submit navigates to — make that promise, and this
+ * proxy is the one place every signup passes through, so this is where the
+ * promise is kept. The mail goes out through Resend because Resend is one
+ * HTTPS POST with a bearer key: the no-dependency rule that keeps this server
+ * previewable holds, and `fetch` is already how the proxy talks upstream.
+ *
+ * Two things cannot live in this repository and must come from the
+ * environment. The API key is a secret, so it rides in KUMI_RESEND_API_KEY
+ * (or RESEND_API_KEY, the name the provider's own docs use); with neither
+ * set, signups work exactly as before and each unsent confirmation is a
+ * stderr line naming the missing key. And the sender only delivers once
+ * kumi.support is verified with the provider — SPF and DKIM are DNS records,
+ * not code — so until that is done the mail service refuses politely and the
+ * refusal lands on stderr too.
+ */
+export const RESEND_ENDPOINT = "https://api.resend.com/emails";
+export const RESEND_API_KEY =
+  process.env.KUMI_RESEND_API_KEY ?? process.env.RESEND_API_KEY ?? "";
+export const WAITLIST_FROM =
+  process.env.KUMI_WAITLIST_FROM ?? "KUMI <hello@kumi.support>";
+
 const port = Number(process.env.PORT ?? 4173);
 const host = process.env.HOST ?? "127.0.0.1";
 
@@ -238,9 +263,12 @@ export function waitlistSuccessPage(bytes) {
   } catch {
     // Unreadable acceptance is still acceptance; say the ordinary thing.
   }
+  // Same words as site.js writes beside the button, and the sender named for
+  // the same reason: the confirmation comes from kumi.support, and mail from
+  // a sender nobody was told to expect is mail that gets binned.
   const line = already
-    ? "You are already on the list. We will be in touch."
-    : "You are on the list. We will be in touch.";
+    ? "You are already on the list. A confirmation from kumi.support is on its way."
+    : "You are on the list. A confirmation from kumi.support is on its way.";
   return `<!doctype html>
 <meta charset="utf-8">
 <title>Waitlist — Kumi</title>
@@ -252,6 +280,114 @@ export function waitlistSuccessPage(bytes) {
   <p style="margin-top: 24px"><a class="btn btn-primary" href="/">Back to the site</a></p>
 </div>
 `;
+}
+
+/**
+ * The address that signed up, read back out of the body that was forwarded.
+ *
+ * Two shapes reach the proxy: site.js gathers the form and posts JSON, and a
+ * browser without JavaScript posts it urlencoded. The confirmation has to
+ * find the address in both, because the promise is made to both. This is not
+ * validation — the gateway has already accepted the address by the time this
+ * runs — only recovery of the one field the mail needs, so anything
+ * unreadable comes back as "" and the signup stands either way.
+ */
+export function waitlistAddressFromBody(body, contentType = "") {
+  const text = body.toString("utf8");
+  let value;
+  if (contentType.includes("application/json")) {
+    try {
+      value = JSON.parse(text)?.email;
+    } catch {
+      return "";
+    }
+  } else {
+    value = new URLSearchParams(text).get("email") ?? undefined;
+  }
+  if (typeof value !== "string") {
+    return "";
+  }
+  const address = value.trim();
+  return address.includes("@") ? address : "";
+}
+
+/**
+ * The mail itself, in the site's own voice.
+ *
+ * Plain text on purpose: a first mail from a new domain is exactly the mail
+ * spam filters weigh hardest, and text with no links to distrust is the
+ * cheapest credibility there is. It opens with the same words the site
+ * answered with, so the inbox confirms the screen. One mail for both moods —
+ * new and already-waiting — because the pages promise the same confirmation
+ * in both, and the gateway deliberately tells a visitor nothing more.
+ */
+export function confirmationEmail(address, from = WAITLIST_FROM) {
+  return {
+    from,
+    to: [address],
+    subject: "You are on the KUMI waitlist",
+    text: `You are on the list.
+
+This is the confirmation the site said to expect. We have this address,
+and it is the one we will write to when KUMI opens up.
+
+Nothing is needed from you until then. If you did not sign up, reply to
+this mail and the address comes off the list.
+
+— KUMI
+The coordination layer between your agents and your codebase.
+`,
+  };
+}
+
+/**
+ * Send the confirmation, and never let the sending matter to the signup.
+ *
+ * The mail is a consequence of joining the list, not a condition of it: a
+ * missing key, an unverified domain, a mail service that is down — every one
+ * of those is a stderr line and a false, never a throw, because the visitor
+ * whose signup the gateway just accepted must not be told it failed over a
+ * mail they have not missed yet. `deliver` exists so the tests can hold the
+ * envelope without the network; production never passes it.
+ */
+export async function sendWaitlistConfirmation(address, options = {}) {
+  const { key = RESEND_API_KEY, from = WAITLIST_FROM, deliver = fetch } = options;
+  if (address === "") {
+    process.stderr.write(
+      "waitlist: a signup was accepted but no address could be read back to confirm it\n",
+    );
+    return false;
+  }
+  if (key === "") {
+    process.stderr.write(
+      "waitlist: confirmation not sent — set KUMI_RESEND_API_KEY to send them\n",
+    );
+    return false;
+  }
+  try {
+    const reply = await deliver(RESEND_ENDPOINT, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${key}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(confirmationEmail(address, from)),
+    });
+    if (!reply.ok) {
+      const said =
+        typeof reply.text === "function" ? await reply.text().catch(() => "") : "";
+      process.stderr.write(
+        `waitlist: the mail service refused a confirmation (${String(reply.status)}): ${said.slice(0, 200)}\n`,
+      );
+      return false;
+    }
+    return true;
+  } catch (error) {
+    process.stderr.write(
+      `waitlist: a confirmation did not go out: ${error instanceof Error ? error.message : String(error)}\n`,
+    );
+    return false;
+  }
 }
 
 /**
@@ -283,6 +419,15 @@ async function proxyWaitlist(request, response) {
     });
     const bytes = Buffer.from(await reply.arrayBuffer());
     const type = reply.headers.get("content-type") ?? "application/octet-stream";
+    if (reply.ok) {
+      // The gateway took the address, so the promised mail leaves now.
+      // Deliberately not awaited: the visitor's answer must never wait on a
+      // mail API, and sendWaitlistConfirmation already turns every failure
+      // into a stderr line rather than a rejection.
+      void sendWaitlistConfirmation(
+        waitlistAddressFromBody(body, request.headers["content-type"] ?? ""),
+      );
+    }
     // A document navigation shows whatever comes back AS the page, and the
     // gateway speaks JSON in both moods. Translate both, not just the
     // refusal: {"added":true} filling a phone's screen reads as a bug too.
@@ -411,5 +556,12 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   server.listen(port, host, () => {
     process.stdout.write(`Kumi marketing site on http://${host}:${String(port)}\n`);
     process.stdout.write(`  /app redirects to ${APP_ORIGIN}\n`);
+    // Said at boot, not discovered from a silent inbox: the pages promise
+    // this mail, so whether it can actually leave is part of "up".
+    process.stdout.write(
+      RESEND_API_KEY === ""
+        ? "  waitlist confirmations OFF — set KUMI_RESEND_API_KEY to send them\n"
+        : `  waitlist confirmations go out from ${WAITLIST_FROM}\n`,
+    );
   });
 }

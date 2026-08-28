@@ -35,8 +35,13 @@ import { fileURLToPath } from "node:url";
 
 import {
   APP_ORIGIN,
+  RESEND_ENDPOINT,
   ROUTES,
+  WAITLIST_FROM,
+  confirmationEmail,
   csrfTokenFromCookies,
+  sendWaitlistConfirmation,
+  waitlistAddressFromBody,
   waitlistFailurePage,
   waitlistSuccessPage,
   waitlistUpstreamHeaders,
@@ -326,6 +331,157 @@ test("a navigated waitlist acceptance is a page too", () => {
   assert.match(waitlistSuccessPage(Buffer.from("ok")), /You are on the list\./u);
 });
 
+test("every signup confirmation names kumi.support as the sender", () => {
+  /*
+   * The confirmation mail comes from kumi.support, and mail from a sender
+   * nobody was told to expect is mail that gets binned — or distrusted as
+   * phishing and reported. So the moment a signup goes through, the site says
+   * who will write. That promise is made in two files that get edited apart:
+   * the in-place answer site.js writes beside the button, and the page
+   * server.mjs shows a browser that navigated the form without JavaScript.
+   * Pinned in both, so a rewrite of one cannot quietly orphan the other.
+   */
+  const sender = /A confirmation from kumi\.support is on its way\./u;
+  assert.match(read("site.js"), sender, "the in-place answer must name the sender");
+  assert.match(
+    waitlistSuccessPage(Buffer.from(JSON.stringify({ added: true }))),
+    sender,
+    "the navigated acceptance page must name the sender",
+  );
+  // An address already on the list gets the same sender to watch for — the
+  // page already distinguishes "already", and that is all it distinguishes.
+  assert.match(
+    waitlistSuccessPage(Buffer.from(JSON.stringify({ added: false }))),
+    sender,
+    "the already-on-the-list page must name the sender too",
+  );
+  // The refusal pages stay sender-free on purpose: kumi.support confirms
+  // signups that worked, and a failure page pointing at it would send
+  // somebody to ask a mailbox about an address it never received.
+  assert.doesNotMatch(
+    waitlistFailurePage(Buffer.from(JSON.stringify({ error: "No." }))),
+    /kumi\.support/u,
+  );
+});
+
+test("the confirmation finds the address in either body the form sends", () => {
+  /*
+   * Two shapes reach the proxy: site.js gathers the form and posts JSON, and
+   * a browser without JavaScript posts it urlencoded. The promise of a
+   * confirmation is made on both paths, so the address has to be readable
+   * from both — and everything unreadable has to come back as "", because by
+   * the time this runs the gateway has already said yes, and a parse that
+   * threw would turn an accepted signup into a 502.
+   */
+  const scripted = Buffer.from(
+    JSON.stringify({ source: "website", displayName: "N", email: " n@example.com ", note: "" }),
+  );
+  assert.equal(waitlistAddressFromBody(scripted, "application/json"), "n@example.com");
+
+  const native = Buffer.from("source=website&displayName=N&email=n%40example.com&note=");
+  assert.equal(
+    waitlistAddressFromBody(native, "application/x-www-form-urlencoded"),
+    "n@example.com",
+  );
+
+  // The unreadable shapes: not JSON after all, a field of the wrong type, no
+  // field, nothing address-shaped. Silence, not a crash, in every case.
+  assert.equal(waitlistAddressFromBody(Buffer.from("{not json"), "application/json"), "");
+  assert.equal(
+    waitlistAddressFromBody(Buffer.from(JSON.stringify({ email: 7 })), "application/json"),
+    "",
+  );
+  assert.equal(
+    waitlistAddressFromBody(Buffer.from("displayName=N"), "application/x-www-form-urlencoded"),
+    "",
+  );
+  assert.equal(
+    waitlistAddressFromBody(Buffer.from("email=word"), "application/x-www-form-urlencoded"),
+    "",
+  );
+});
+
+test("the confirmation mail leaves the moment the gateway accepts", async () => {
+  /*
+   * The pages promise mail from kumi.support; this is the machinery that
+   * keeps the promise. The envelope is held by a stub so the suite never
+   * touches the network, and what is asserted is what deliverability and the
+   * promise both depend on: the provider's own endpoint, the key as a bearer,
+   * a sender on the domain the pages told people to watch for, and the mail
+   * opening with the same words the site answered with.
+   */
+  assert.match(
+    WAITLIST_FROM,
+    /@kumi\.support>?$/u,
+    "the sender must live on the domain the pages promise",
+  );
+
+  const calls = [];
+  const deliver = async (url, init) => {
+    calls.push({ url, init });
+    return { ok: true, status: 200 };
+  };
+  const sent = await sendWaitlistConfirmation("n@example.com", { key: "re_test", deliver });
+  assert.equal(sent, true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, RESEND_ENDPOINT);
+  assert.equal(calls[0].init.method, "POST");
+  assert.equal(calls[0].init.headers.authorization, "Bearer re_test");
+
+  const mail = JSON.parse(calls[0].init.body);
+  assert.deepEqual(mail.to, ["n@example.com"]);
+  assert.equal(mail.from, WAITLIST_FROM);
+  assert.match(mail.subject, /waitlist/iu);
+  assert.match(mail.text, /You are on the list\./u, "the inbox confirms the screen");
+  assert.deepEqual(mail, confirmationEmail("n@example.com"));
+
+  // And the proxy actually fires it — unawaited, so no visitor's answer ever
+  // waits on a mail API. Pinned in the source the way site.js's wiring order
+  // is pinned above: this is the line whose quiet loss would break the
+  // promise while every page still made it.
+  assert.match(read("server.mjs"), /void sendWaitlistConfirmation\(/u);
+});
+
+test("a confirmation that cannot send never breaks the signup", async () => {
+  /*
+   * The mail is a consequence of joining the list, not a condition of it. A
+   * missing key (the site working before anybody configures mail), an
+   * unverified domain, a provider that is down — each is a stderr line and a
+   * false, never a throw, because the gateway already accepted the address
+   * and the visitor must not be told otherwise over a mail they have not
+   * missed yet.
+   */
+  let asked = 0;
+  const counting = async () => {
+    asked += 1;
+    return { ok: true, status: 200 };
+  };
+  assert.equal(
+    await sendWaitlistConfirmation("n@example.com", { key: "", deliver: counting }),
+    false,
+  );
+  assert.equal(await sendWaitlistConfirmation("", { key: "re_test", deliver: counting }), false);
+  assert.equal(asked, 0, "no key or no address means nothing leaves at all");
+
+  const refused = async () => ({
+    ok: false,
+    status: 422,
+    text: async () => "domain is not verified",
+  });
+  assert.equal(
+    await sendWaitlistConfirmation("n@example.com", { key: "re_test", deliver: refused }),
+    false,
+  );
+
+  const dead = async () => {
+    throw new Error("network died");
+  };
+  assert.equal(
+    await sendWaitlistConfirmation("n@example.com", { key: "re_test", deliver: dead }),
+    false,
+  );
+});
+
 test("no marketing address is cached beyond the checkout that served it", () => {
   /*
    * The monorepo's version of this asserted that no marketing key was marked
@@ -500,6 +656,29 @@ test("every stylesheet's braces balance", () => {
     failures,
     [],
     `stylesheets that do not balance:\n  ${failures.join("\n  ")}`,
+  );
+});
+
+test("the website demo does not expose an independently scrollable surface", () => {
+  const css = read("site.css");
+  for (const selector of ["shot-feed", "th-body"]) {
+    const blocks = [
+      ...css.matchAll(new RegExp(`(?:^|\\n)\\.${selector}\\s*\\{([^}]*)\\}`, "gu")),
+    ].map((match) => match[1]).join("\n");
+    assert.match(blocks, /overflow:\s*hidden/u, `.${selector} must keep page scrolling outside the demo`);
+    assert.doesNotMatch(blocks, /overflow-[xy]:\s*(?:auto|scroll)/u);
+  }
+});
+
+test("meaningful interactive elements provide subtle hover affordances", () => {
+  const css = read("site.css");
+  assert.match(css, /\.nav-link:hover[\s\S]*?background:/u);
+  assert.match(css, /\.btn-primary:hover[\s\S]*?background:/u);
+  assert.match(css, /\.btn-ghost:hover[\s\S]*?border-color:/u);
+  assert.match(
+    css,
+    /@media \(hover: hover\) and \(pointer: fine\) and \(prefers-reduced-motion: no-preference\)\s*\{\s*\.btn:hover\s*\{\s*transform:\s*translateY\(-2px\)/u,
+    "the clean lift belongs to real controls and only runs when motion is welcome",
   );
 });
 
@@ -851,6 +1030,16 @@ test("no page fetches a font, script, style or image from another host", () => {
   );
 });
 
+test("the water field leaves the top lockup clear", () => {
+  const shader = read("field.js");
+  assert.match(shader, /float topClear = 1\.0 - smoothstep\(0\.76, 0\.82, fieldY\)/u);
+  assert.match(shader, /colour \*= topClear/u);
+  assert.ok(
+    shader.indexOf("colour *= topClear") < shader.indexOf("outColour ="),
+    "the clear zone must be applied to the final field before it is drawn",
+  );
+});
+
 test("no page carries an inline script or an inline event handler", () => {
   /*
    * The gateway's CSP has no `unsafe-inline`. An inline `<script>` body and an
@@ -1131,8 +1320,8 @@ test("every download the page offers is a file the packager actually builds", ()
 /*
  * The waitlist form posts the names the deployment reads.
  *
- * This is the one form on the site and it talks to a service in another
- * repository, which is the whole problem: `POST /api/v1/waitlist` reads
+ * The form ultimately talks to a service in another repository, which is the
+ * whole problem: `POST /api/v1/waitlist` reads
  * `email`, `displayName`, `note` and `source`, and it ignores anything else
  * in silence rather than refusing it. So a field renamed on this side is not
  * an error anywhere — the form submits, the server answers 202, and what
@@ -1147,11 +1336,13 @@ test("every download the page offers is a file the packager actually builds", ()
 test("the waitlist form posts the fields the deployment actually reads", () => {
   const page = read("waitlist.html");
 
-  // The API is not served from this origin, so this action has to be absolute
-  // and has to be the deployment. A relative one resolves against the site and
-  // 404s; a different host would post somebody's address somewhere else.
+  // The API is not served from this origin, but the action is relative on
+  // purpose: server.mjs proxies /api/v1/waitlist to the deployment with an
+  // origin the gateway accepts. An absolute action would post straight to the
+  // deployment and be refused; a root-absolute one would escape a preview's
+  // path prefix. Relative, it resolves to the one path the server forwards.
   const action = /<form[^>]*\baction="([^"]+)"/u.exec(page)?.[1];
-  assert.equal(action, "https://kumi.up.railway.app/api/v1/waitlist");
+  assert.equal(action, "api/v1/waitlist");
 
   const named = new Set(
     [...page.matchAll(/<(?:input|textarea|select)[^>]*\bname="([^"]+)"/gu)].map(

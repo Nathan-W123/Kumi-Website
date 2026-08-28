@@ -241,6 +241,16 @@ void main() {
   }
 
   colour = colour / (1.0 + colour * 0.45);
+
+  /* Keep the top lockup optically clean. At the hero's low camera angle the
+     far rim of the pool compresses into a nearly horizontal highlight. It
+     used to run straight through the headline, where even a soft edge read
+     as a faded rule rather than water. Fade the field out before that type
+     zone; the ambient CSS glow remains underneath, so this is a quiet area
+     in the composition rather than a hard crop. gl_FragCoord is bottom-up. */
+  float fieldY = gl_FragCoord.y / uViewport.y;
+  float topClear = 1.0 - smoothstep(0.76, 0.82, fieldY);
+  colour *= topClear;
   outColour = vec4(colour, 1.0);
 }
 `;

@@ -25,11 +25,6 @@
         <a class="nav-brand" href=".">
           <img src="kumi-mark.png" alt="KUMI" width="26" height="26">
         </a>
-        <div class="nav-links">
-          <a class="nav-link" href="about">About</a>
-          <a class="nav-link" href="faq">FAQ</a>
-          <a class="nav-link" href="security">Security</a>
-        </div>
         <div class="nav-end">
           <a class="nav-link" href="/app#signin">Sign in</a>
         </div>
@@ -66,23 +61,16 @@
                wants to know which door somebody came through, and this is the
                only door that sets it.
 
-               The action is absolute because the API is not here. This site
-               and the deployment are separate origins now, which the script
-               below has to survive. -->
-          <form class="join" method="post"
-            action="https://kumi.up.railway.app/api/v1/waitlist">
+               The action is relative even though the API is not here: this
+               site's own server proxies /api/v1/waitlist to the deployment
+               with an origin the gateway accepts. An absolute action posts
+               straight to the deployment and is refused; a root-absolute one,
+               served under the preview proxy's deep path, escapes this site's
+               proxy the same way — and either answer is a page of JSON. From
+               /waitlist it still resolves to /api/v1/waitlist. -->
+          <form class="join" method="post" action="api/v1/waitlist">
             <input type="hidden" name="source" value="website">
 
-               The route still accepts a company and a team size, and the
-               columns are still there — they are nullable, and leaving the
-               back end able to take a field the form has stopped asking for
-               costs nothing and saves a migration if it comes back.
-
-               The action is relative — served under the preview proxy's deep
-               path, a root-absolute one posts to the deployment's own API
-               instead of this site's proxy, and the answer is a page of
-               JSON. From /waitlist it still resolves to /api/v1/waitlist. -->
-          <form class="join" method="post" action="api/v1/waitlist">
             <div class="join-field">
               <label for="join-name">Your name</label>
               <input id="join-name" name="displayName" type="text" autocomplete="name" maxlength="120">

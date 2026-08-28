@@ -377,18 +377,16 @@ strong {
   right: 0;
   z-index: 40;
   padding: 18px 0;
-  background: color-mix(in srgb, var(--bg) 58%, transparent);
-  backdrop-filter: blur(14px) saturate(140%);
+  background: transparent;
   border-bottom: 1px solid transparent;
-  transition: border-color 0.3s var(--ease-motion),
-    background-color 0.3s var(--ease-motion);
+  transition: border-color 0.3s var(--ease-motion);
 }
 
 /* Set by site.js once the page has left the hero, so the bar only grows an
    edge when there is something scrolling under it. */
 .site-nav.lifted {
   border-bottom-color: var(--border);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  background: transparent;
 }
 
 /* The bar is wider than the column beneath it, so the brand sits close to
@@ -429,6 +427,7 @@ strong {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-inline-start: auto;
 }
 
 .nav-link {
@@ -562,6 +561,17 @@ strong {
   .btn-ghost:hover {
     border-color: var(--salmon);
     background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+  }
+}
+
+/* A small lift belongs only to controls that actually go somewhere. It makes
+   the affordance legible without teaching the decorative product mock or
+   feature panels to behave like buttons. Movement stays behind both the
+   fine-pointer and reduced-motion gates; colour still carries hover for
+   everyone else. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .btn:hover {
+    transform: translateY(-2px);
   }
 }
 
@@ -1862,13 +1872,10 @@ strong {
   align-content: start;
   min-height: 0;
   padding: 16px 18px 8px;
-  overflow-y: auto;
-  /* The demo's scrollbar would only narrate the player's own staging. */
-  scrollbar-width: none;
-}
-
-.shot-feed::-webkit-scrollbar {
-  display: none;
+  /* This is a staged illustration, not a second page. Clipping keeps wheel
+     and touch gestures with the marketing page while site.js may still set
+     scrollTop to frame the replayed conversation. */
+  overflow: hidden;
 }
 
 /* The channel's past, standing in for messages that are not the story:
@@ -2341,12 +2348,8 @@ strong {
   align-content: start;
   min-height: 0;
   padding: 12px 13px;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.th-body::-webkit-scrollbar {
-  display: none;
+  /* The thread is part of the same fixed demo frame as the channel. */
+  overflow: hidden;
 }
 
 /* The elbow out of the root's avatar gutter, the way the open thread draws
