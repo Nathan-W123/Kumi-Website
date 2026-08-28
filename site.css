@@ -377,18 +377,16 @@ strong {
   right: 0;
   z-index: 40;
   padding: 18px 0;
-  background: color-mix(in srgb, var(--bg) 58%, transparent);
-  backdrop-filter: blur(14px) saturate(140%);
+  background: transparent;
   border-bottom: 1px solid transparent;
-  transition: border-color 0.3s var(--ease-motion),
-    background-color 0.3s var(--ease-motion);
+  transition: border-color 0.3s var(--ease-motion);
 }
 
 /* Set by site.js once the page has left the hero, so the bar only grows an
    edge when there is something scrolling under it. */
 .site-nav.lifted {
   border-bottom-color: var(--border);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  background: transparent;
 }
 
 /* The bar is wider than the column beneath it, so the brand sits close to
@@ -429,6 +427,7 @@ strong {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-inline-start: auto;
 }
 
 .nav-link {
