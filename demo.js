@@ -37,7 +37,7 @@ const ACTS = [
  * and the next starting, which is what makes a room read as a room rather than
  * a transcript being pasted in.
  */
-const BEAT = 3180;
+const BEAT = 3400;
 /** A caption change wants a moment of its own before the room moves again. */
 const TURN = 700;
 /** After the last row, before the room resets and does it again. */
