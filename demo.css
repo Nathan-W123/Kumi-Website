@@ -116,6 +116,29 @@
   color: color-mix(in srgb, currentColor 55%, transparent);
 }
 
+/* ---------------------------------------------------------- the rail ---- */
+
+/*
+ * The workspace chips, coloured the way the product colours them.
+ *
+ * The app derives one steady tint per channel from its id — `channelTone` in
+ * screen-chats.js picks from five, and `.channel-picture-fallback` mixes it
+ * into the surface at twenty per cent for the ground and forty-five for the
+ * letters. Flat grey squares were the thing that recipe exists to fix: the
+ * rail is nothing but squares, and two rooms whose names start with the same
+ * letter drew the same one.
+ *
+ * The three tones not already on this site are the app's own values, so a
+ * chip in the demo is the colour that chip would be.
+ */
+.demo-shot .rail-pic {
+  --blue: #60a5fa;
+  --cyan: #34d3c0;
+  --pink: #f472b6;
+  background: color-mix(in srgb, var(--pic-tone, var(--muted)) 20%, var(--surface-3));
+  color: color-mix(in srgb, var(--pic-tone, var(--text-2, var(--muted))) 45%, var(--text));
+}
+
 /* Cursor's mark, beside the two the front page already ships. The artwork is
    the app's own — Simple Icons, CC0 — copied from ui.js rather than redrawn,
    so an agent's vendor reads the same in the demo as in the product. */
