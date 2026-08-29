@@ -126,15 +126,30 @@
   overflow: hidden;
 }
 
-/* A row the replay has not reached yet. demo.js removes this; without the
-   module every row is simply present, which is the finished conversation. */
+/* A row the replay has not reached yet.
+ *
+ * Out of flow, not merely transparent. Hidden with `opacity` these rows keep
+ * their full height, so a room three messages into its story reserves the
+ * space for the twelve still to come — which reads as a gap under the
+ * conversation and stops the feed ever growing from the bottom. The class is
+ * added by demo.js and only by demo.js; without the module nothing is hidden
+ * and the page is the finished conversation. */
 .demo-shot [data-step].pending {
-  opacity: 0;
-  transform: translateY(0.5rem);
+  display: none;
 }
 
+/* The entrance, which runs when a row is displayed rather than when a property
+   changes — the transition it replaces could never fire, because there is no
+   intermediate state between `display: none` and laid out. */
 .demo-shot [data-step] {
-  transition: opacity 320ms ease, transform 320ms ease;
+  animation: demo-in 360ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@keyframes demo-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.55rem);
+  }
 }
 
 /* A chip mid-task. The phase text is swapped by the module; this is only what
@@ -152,9 +167,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scene-cap span,
-  .demo-shot [data-step] {
+  .scene-cap span {
     transition: none;
+  }
+  .demo-shot [data-step] {
+    animation: none;
   }
   .demo-shot .agent-face.running .presence {
     animation: none;
