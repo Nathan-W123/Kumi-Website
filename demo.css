@@ -67,24 +67,29 @@
 
 /* The frame fills what is left, and the feed scrolls inside it rather than the
    page scrolling — a recording that pans the document reads as a screenshot
-   being scrolled, which is the opposite of what this is showing. */
-.demo-shot {
+   being scrolled, which is the opposite of what this is showing.
+   
+   Scoped to the stage. The same figure sits inside a section on the front page,
+   where site.css already sizes it; forcing this column on it there left a band
+   of empty frame under the composer. */
+.demo-body .demo-shot {
   margin: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-.demo-shot .shot-cols,
-.demo-shot .shot-main {
+.demo-body .demo-shot .shot-cols,
+.demo-body .demo-shot .shot-main {
   min-height: 0;
 }
 
-/* Bottom-anchored, the way a chat feed is. Left to fill from the top, a room
+/* Bottom-anchored, the way a chat feed is. Stage only, for the same reason as
+   above: the front page's frame grows with its conversation instead. Left to fill from the top, a room
    part way through its story shows its messages stacked against the header
    with a third of the frame empty underneath — which reads as an app with
    nothing in it rather than a conversation in progress. */
-.demo-shot .shot-feed {
+.demo-body .demo-shot .shot-feed {
   overflow: hidden;
   scroll-behavior: smooth;
   display: flex;
@@ -94,7 +99,7 @@
 
 /* The past, above the day rule, is the first thing to give up room when the
    conversation grows into the frame. */
-.demo-shot .shot-feed .skel {
+.demo-body .demo-shot .shot-feed .skel {
   flex: 0 0 auto;
 }
 

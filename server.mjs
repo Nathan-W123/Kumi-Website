@@ -47,6 +47,7 @@ export const ROUTES = new Map([
   ["/terms", ["terms.html", "text/html; charset=utf-8"]],
   ["/download", ["download.html", "text/html; charset=utf-8"]],
   ["/demo", ["demo.html", "text/html; charset=utf-8"]],
+  ["/demo-classic", ["demo-classic.html", "text/html; charset=utf-8"]],
   ["/site.css", ["site.css", "text/css; charset=utf-8"]],
   ["/site.js", ["site.js", "text/javascript; charset=utf-8"]],
   ["/site-boot.js", ["site-boot.js", "text/javascript; charset=utf-8"]],
