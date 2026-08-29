@@ -1,0 +1,162 @@
+/*
+ * The stage for /demo.
+ *
+ * site.css already draws the app's furniture — the channel header, the rows,
+ * the agent chips, the arbitration card — because the front page's own shot is
+ * built from the same pieces. Nothing here redraws any of that. This file only
+ * does what a stage does: fills the viewport with the frame, holds the act
+ * title above it, and gives the replay something to move.
+ *
+ * Sized so a 1280x720 capture is the frame and almost nothing else. That is the
+ * one requirement a page meant to be recorded has that a page meant to be read
+ * does not.
+ */
+
+.demo-body {
+  /* `height`, not `min-height`: the stage is exactly the viewport, and the
+     feed inside the frame is the only thing that scrolls. A page that grows
+     past the window puts its own footer outside the recording. */
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: clamp(0.6rem, 1.6vh, 1.4rem);
+  padding: clamp(0.9rem, 2.4vh, 2rem) clamp(1rem, 4vw, 3rem);
+  /* The dashboard's ground, so the frame sits on the colour it sits on in the
+     product rather than on the marketing page's gradient. */
+  background: #121110;
+}
+
+.demo-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-self: start;
+  color: color-mix(in srgb, currentColor 62%, transparent);
+  text-decoration: none;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+}
+
+.demo-home:hover,
+.demo-home:focus-visible {
+  color: inherit;
+}
+
+/* The act title. One line, swapped by demo.js; the span is what moves, so a
+   change of act reads as a change rather than a flicker. */
+.scene-cap {
+  margin: 0;
+  min-height: 1.9em;
+  font-family: var(--display, inherit);
+  font-size: clamp(1.05rem, 2.5vw, 1.7rem);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.scene-cap span {
+  display: inline-block;
+  transition: opacity 420ms ease, transform 420ms ease;
+}
+
+.scene-cap.turning span {
+  opacity: 0;
+  transform: translateY(-0.35em);
+}
+
+/* The frame fills what is left, and the feed scrolls inside it rather than the
+   page scrolling — a recording that pans the document reads as a screenshot
+   being scrolled, which is the opposite of what this is showing. */
+.demo-shot {
+  margin: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-shot .shot-cols,
+.demo-shot .shot-main {
+  min-height: 0;
+}
+
+/* Bottom-anchored, the way a chat feed is. Left to fill from the top, a room
+   part way through its story shows its messages stacked against the header
+   with a third of the frame empty underneath — which reads as an app with
+   nothing in it rather than a conversation in progress. */
+.demo-shot .shot-feed {
+  overflow: hidden;
+  scroll-behavior: smooth;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* The past, above the day rule, is the first thing to give up room when the
+   conversation grows into the frame. */
+.demo-shot .shot-feed .skel {
+  flex: 0 0 auto;
+}
+
+/* One line. It is the only thing on the stage that is not the product, so it
+   gets the least room and never takes any from the frame. */
+.demo-foot {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  max-width: 70ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: color-mix(in srgb, currentColor 55%, transparent);
+}
+
+/* Cursor's mark, beside the two the front page already ships. The artwork is
+   the app's own — Simple Icons, CC0 — copied from ui.js rather than redrawn,
+   so an agent's vendor reads the same in the demo as in the product. */
+.af-c {
+  color: #b6b3ad;
+}
+
+/* The symbol sheet is a definition, never a drawing. */
+.mark-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* A row the replay has not reached yet. demo.js removes this; without the
+   module every row is simply present, which is the finished conversation. */
+.demo-shot [data-step].pending {
+  opacity: 0;
+  transform: translateY(0.5rem);
+}
+
+.demo-shot [data-step] {
+  transition: opacity 320ms ease, transform 320ms ease;
+}
+
+/* A chip mid-task. The phase text is swapped by the module; this is only what
+   makes it read as running rather than settled. */
+.demo-shot .a-status.busy {
+  color: color-mix(in srgb, currentColor 72%, transparent);
+}
+
+.demo-shot .agent-face.running .presence {
+  animation: demo-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes demo-pulse {
+  50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-cap span,
+  .demo-shot [data-step] {
+    transition: none;
+  }
+  .demo-shot .agent-face.running .presence {
+    animation: none;
+  }
+}

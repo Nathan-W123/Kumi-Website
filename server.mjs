@@ -46,10 +46,13 @@ export const ROUTES = new Map([
   ["/privacy", ["privacy.html", "text/html; charset=utf-8"]],
   ["/terms", ["terms.html", "text/html; charset=utf-8"]],
   ["/download", ["download.html", "text/html; charset=utf-8"]],
+  ["/demo", ["demo.html", "text/html; charset=utf-8"]],
   ["/site.css", ["site.css", "text/css; charset=utf-8"]],
   ["/site.js", ["site.js", "text/javascript; charset=utf-8"]],
   ["/site-boot.js", ["site-boot.js", "text/javascript; charset=utf-8"]],
   ["/field.js", ["field.js", "text/javascript; charset=utf-8"]],
+  ["/demo.css", ["demo.css", "text/css; charset=utf-8"]],
+  ["/demo.js", ["demo.js", "text/javascript; charset=utf-8"]],
   // The type, self-hosted: the deployment's CSP is `font-src 'self'`, so a
   // Google Fonts link would silently never load and the page would render in
   // whatever sans the visitor has. OFL notice ships beside them.

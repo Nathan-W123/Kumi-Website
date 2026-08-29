@@ -980,7 +980,11 @@ function channelStory(animate, inView) {
   // only the tempo.
   const PACE = 0.512;
   const slow = (ms) => ms / PACE;
-  const shot = document.querySelector(".app-shot");
+  // Not the demo stage's frame. /demo is built from the same furniture and
+  // carries the same class so it inherits the same stylesheet, but it has its
+  // own module and its own running order — and two replays driving one feed
+  // would fight over every row.
+  const shot = document.querySelector(".app-shot:not(.demo-shot)");
   if (shot === null) {
     return;
   }
