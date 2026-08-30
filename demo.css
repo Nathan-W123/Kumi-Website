@@ -118,6 +118,23 @@
 
 /* ---------------------------------------------------------- the rail ---- */
 
+/* The mark, above the workspaces, where the product's own crown puts it. It is
+   chrome rather than a room, so it sits apart from the chips and takes none of
+   their tinting. */
+.demo-shot .rail-brand {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 4px;
+  opacity: 0.9;
+}
+
+.demo-shot .rail-brand img {
+  width: 24px;
+  height: 24px;
+}
+
 /*
  * The workspace chips, coloured the way the product colours them.
  *

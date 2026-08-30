@@ -79,22 +79,31 @@ function main() {
   // label to put back when it finishes.
   const chips = new Map();
   for (const el of shot.querySelectorAll(".a-status[data-agent][data-busy]")) {
-    chips.set(el.dataset.agent, {
+    const agent = el.dataset.agent;
+    const group = chips.get(agent) ?? [];
+    group.push({
       el,
       done: el.textContent,
       phases: (el.dataset.phases ?? "").split("|").filter(Boolean),
     });
+    chips.set(agent, group);
   }
 
   const face = (row) => row.closest(".m")?.querySelector(".agent-face.running");
 
+  /** The step whose thread the panel is showing. */
+  const THREAD_AT = 9;
+
   function reset() {
+    shot.classList.remove("thread-open");
     for (const row of rows) {
       row.classList.add("pending");
     }
-    for (const { el, done } of chips.values()) {
-      el.textContent = done;
-      el.classList.remove("busy");
+    for (const group of chips.values()) {
+      for (const { el, done } of group) {
+        el.textContent = done;
+        el.classList.remove("busy");
+      }
     }
     feed.scrollTop = 0;
     if (capText !== null && captions.length > 0) {
@@ -115,22 +124,28 @@ function main() {
 
   /** Walks a chip's phases for as long as its agent is working. */
   function work(agent) {
-    const chip = chips.get(agent);
-    if (chip === undefined || chip.phases.length === 0) {
+    const group = (chips.get(agent) ?? []).filter((c) => c.phases.length > 0);
+    if (group.length === 0) {
       return () => undefined;
     }
-    chip.el.classList.add("busy");
     let at = 0;
-    chip.el.textContent = chip.phases[0];
+    for (const chip of group) {
+      chip.el.classList.add("busy");
+      chip.el.textContent = chip.phases[0];
+    }
     const tick = setInterval(() => {
-      at = (at + 1) % chip.phases.length;
-      chip.el.textContent = chip.phases[at];
+      at += 1;
+      for (const chip of group) {
+        chip.el.textContent = chip.phases[at % chip.phases.length];
+      }
     }, 900);
     timers.push(tick);
     return () => {
       clearInterval(tick);
-      chip.el.classList.remove("busy");
-      chip.el.textContent = chip.done;
+      for (const chip of group) {
+        chip.el.classList.remove("busy");
+        chip.el.textContent = chip.done;
+      }
     };
   }
 
@@ -154,6 +169,12 @@ function main() {
       }
 
       row.classList.remove("pending");
+      // The ask is picked up, so its thread opens beside the room — the panel
+      // is already in the markup at zero width, and the class is what gives it
+      // one. Left open afterwards, because a thread does not close itself.
+      if (step === THREAD_AT) {
+        shot.classList.add("thread-open");
+      }
       feed.scrollTop = feed.scrollHeight;
 
       // A thread link is an agent picking the ask up: its chip starts running
@@ -191,12 +212,15 @@ function main() {
   function disarm() {
     stopped = true;
     clear();
+    shot.classList.add("thread-open");
     for (const row of rows) {
       row.classList.remove("pending");
     }
-    for (const { el, done } of chips.values()) {
-      el.textContent = done;
-      el.classList.remove("busy");
+    for (const group of chips.values()) {
+      for (const { el, done } of group) {
+        el.textContent = done;
+        el.classList.remove("busy");
+      }
     }
   }
 
